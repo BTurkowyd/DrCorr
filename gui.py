@@ -189,11 +189,11 @@ class Ui_MainWindow(object):
         sys.exit(self)
 
     def run_dr_corr(self):
-        # try:
-        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-        methods.dr_corr(self)
-        # except:
-        #     print("Please select ROI first")
+        try:
+            self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
+            methods.dr_corr(self)
+        except:
+            print("Please select ROI first")
 
     def run_remove_single_roi(self):
         try:
