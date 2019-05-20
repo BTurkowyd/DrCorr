@@ -9,7 +9,7 @@ import numpy as np
 
 
 class NeNA:
-    def __init__(self, rois, startFrame, endFrame, windowJump, windowSize):
+    def __init__(self, rois, startFrame, endFrame, windowJump, windowSize, inputFormat):
         self.x_min = rois[0, 0]
         self.y_min = rois[0, 1]
         self.x_max = rois[1, 0]
@@ -19,8 +19,18 @@ class NeNA:
         self.endFrame = endFrame
         self.windowJump = windowJump
         self.windowSize = windowSize
+        self.inputFormat = inputFormat
 
     def nena_roi(self, loc, firstFrame, lastFrame, windJump, windSize):
+        if self.inputFormat == "RapidSTORM":
+            pass
+        else:
+            xy = loc.values[:,2:4]
+            frame = loc.values[:,1:2]
+            intensity = loc.values[:,5:6]
+
+            loc = np.concatenate((xy,frame,intensity), axis=1)
+
         if (windJump or windSize) == 0:
             for l in loc:
                 if self.x_min < l[0] < self.x_max and self.y_min < l[1] < self.y_max:
@@ -33,7 +43,7 @@ class NeNA:
                 self.nenaRAM = []
                 for l in loc:
                     if self.x_min < l[0] < self.x_max and self.y_min < l[1] < self.y_max and i <= l[
-                        2] < i + self.windowSize:
+                        1] < i + self.windowSize:
                         self.nenaRAM.append(l)
                 self.nenaRAM = np.asarray(self.nenaRAM)
                 self.nena.append(self.nenaRAM)

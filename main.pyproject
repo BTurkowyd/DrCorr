@@ -1,3 +1,3 @@
 {
-    "files": ["main.py", "mainwindow.ui"]
+    "files": ["main.py", "dbscan_widget.py", "optics_widget.py", "drift.py", "fiducial.py", "gui.py", "kalman_filter.py", "methods.py", "nena.py", "particle.py", "rois.py"]
 }

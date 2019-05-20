@@ -6,25 +6,27 @@ Created on Sun Mar  4 16:31:13 2018
 """
 
 import os
-from numpy import shape, loadtxt, sqrt, zeros
-import numpy as np
-from cv2 import EVENT_LBUTTONDOWN, EVENT_LBUTTONUP, imshow, imread, imwrite, namedWindow, setMouseCallback, waitKey, \
-    destroyAllWindows, putText, FONT_HERSHEY_SIMPLEX, LINE_AA
-from cv2 import resize as resizer
-from cv2 import rectangle as rectangler
 from itertools import islice
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from cv2 import (EVENT_LBUTTONDOWN, EVENT_LBUTTONUP, FONT_HERSHEY_SIMPLEX,
+                 LINE_AA, destroyAllWindows, imread, imshow, imwrite,
+                 namedWindow, putText)
+from cv2 import rectangle as rectangler
+from cv2 import resize as resizer
+from cv2 import setMouseCallback, waitKey
+from numpy import loadtxt, shape, sqrt, zeros
 from scipy import spatial
 from scipy.optimize import curve_fit
 
-import matplotlib.pyplot as plt
-
+from drift import Drift
+from fiducial import Fiducial
+from kalman_filter import KalmanFilterXY
+from nena import NeNA
 from particle import Particle
 from rois import ROIs
-from nena import NeNA
-from fiducial import Fiducial
-from drift import Drift
-from kalman_filter import KalmanFilterXY
 
 refPt = list()
 resize = None
@@ -109,12 +111,15 @@ def neNa(app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, 
 
     iy, ix, iz = shape(image)
 
+    if app.inputFormat.currentText() == "RapidSTORM":
+        loc = loadtxt(localization)
+    else:
+        loc = pd.read_csv(app.locfileName)
 
-    loc = loadtxt(localization)
     output_folder = os.path.dirname(os.path.realpath(localization))
 
     regions = ROIs(refPt, ix, iy)
-    nena_regions = [NeNA(r, firstFrame, lastFrame, windowJump, windowSize) for r in regions.rois]
+    nena_regions = [NeNA(r, firstFrame, lastFrame, windowJump, windowSize, app.inputFormat.currentText()) for r in regions.rois]
 
     app.statusBar.setText("Calculating NeNA values")
 
@@ -149,9 +154,12 @@ def dr_corr(app):
 
     iy, ix, iz = shape(image)
 
-    loc = loadtxt(app.locfileName)
-
-    particles = [Particle(p[0], p[1], p[2], p[3]) for p in loc]
+    if app.inputFormat.currentText() == "RapidSTORM":
+        loc = loadtxt(app.locfileName)
+        particles = [Particle(p[0], p[1], p[2], p[3]) for p in loc]
+    else:
+        loc = pd.read_csv(app.locfileName)
+        particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
 
     regions = ROIs(refPt, ix, iy)
 
@@ -163,9 +171,9 @@ def dr_corr(app):
     app.statusBar.setText("Extracting fiducial markers")
 
     for f in fiducials:
-        f.extract_fiducial(loc)
-        f.rel_drift()
-        f.stretch_fiducials(loc)
+        f.extract_fiducial(loc, app.inputFormat.currentText())
+        f.rel_drift(app.inputFormat.currentText())
+        f.stretch_fiducials(loc, app.inputFormat.currentText())
         k += 1
         app.progressBar.setValue(k)
 
@@ -187,18 +195,32 @@ def dr_corr(app):
     with open(app.locfileName) as input_file:
         head = list(islice(input_file, 1))
 
-    with open(app.locfileName.split('.')[0] + "_corrected.txt", "w") as final_file:
-        final_file.write(str(head[0]))
-        k = 0
-        app.progressBar.setValue(k)
-        app.progressBar.setMaximum(len(loc))
-        app.statusBar.setText("Saving a new localization file")
-        for p in particles:
-            final_file.write('%1.1f %1.1f %1.0f %1.0f\n' % (p.new_x, p.new_y, p.t, p.I))
-            k += 1
-            if k % 1000 == 0:
-                app.progressBar.setValue(k)
-        app.progressBar.setValue(k)
+    if app.inputFormat.currentText() == "RapidSTORM":
+        with open(app.locfileName.split('.')[0] + "_corrected.txt", "w") as final_file:
+            final_file.write(str(head[0]))
+            k = 0
+            app.progressBar.setValue(k)
+            app.progressBar.setMaximum(len(loc))
+            app.statusBar.setText("Saving a new localization file")
+            for p in particles:
+                final_file.write('%1.1f %1.1f %1.0f %1.0f\n' % (p.new_x, p.new_y, p.t, p.I))
+                k += 1
+                if k % 1000 == 0:
+                    app.progressBar.setValue(k)
+            app.progressBar.setValue(k)
+    else:
+        with open(app.locfileName.split('.')[0] + "_corrected.csv", "w") as final_file:
+            final_file.write('"id","frame","x [nm]","y [nm]","sigma [nm]","intensity [photon]","offset [photon]","bkgstd [photon]","chi2","uncertainty_xy [nm]"\n')
+            k = 0
+            app.progressBar.setValue(k)
+            app.progressBar.setMaximum(len(loc))
+            app.statusBar.setText("Saving a new localization file")
+            for p in particles:
+                final_file.write("%1.0f,%1.0f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f\n" % (p.id, p.t, p.new_x, p.new_y, p.sigma, p.I, p.offset, p.bkgstd, p.chi2, p.uncertainty))
+                k += 1
+                if k % 1000 == 0:
+                    app.progressBar.setValue(k)
+            app.progressBar.setValue(k)
 
     output_folder = os.path.dirname(os.path.realpath(app.locfileName))
     with open(output_folder + "\\" + "drift_trace.txt", "w") as drift_file:

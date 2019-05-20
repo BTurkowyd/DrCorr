@@ -162,8 +162,12 @@ class Ui_MainWindow(object):
         self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar"))
 
     def getFiles(self):
-        self.openFile = QtWidgets.QWidget()
-        self.locfileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the localization file", "","TXT Files (*.txt) ;;All Files (*)")
+        if self.inputFormat.currentText() == "RapidSTORM":
+            self.openFile = QtWidgets.QWidget()
+            self.locfileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the localization file", "","TXT Files (*.txt) ;;All Files (*)")
+        else:
+            self.openFile = QtWidgets.QWidget()
+            self.locfileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the localization file", "","CSV Files (*.csv) ;;All Files (*)")
         self.imgFileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the image reconstruction", "","PNG Files (*.PNG) ;; All Files (*)")
 
         if self.locfileName and self.imgFileName:
@@ -185,11 +189,11 @@ class Ui_MainWindow(object):
         sys.exit(self)
 
     def run_dr_corr(self):
-        try:
-            self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-            methods.dr_corr(self)
-        except:
-            print("Please select ROI first")
+        # try:
+        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
+        methods.dr_corr(self)
+        # except:
+        #     print("Please select ROI first")
 
     def run_remove_single_roi(self):
         try:
