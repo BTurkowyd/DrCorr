@@ -14,6 +14,7 @@ import sys
 import methods
 import dbscan_widget
 import optics_widget
+import swift_wrapper
 
 
 class Ui_MainWindow(object):
@@ -133,6 +134,26 @@ class Ui_MainWindow(object):
         self.toolBar.setObjectName("toolBar")
         MainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.toolBar)
 
+        self.menuPlot = QtWidgets.QMenu(self.menubar)
+        self.menuPlot.setObjectName("menuPlot")
+        self.menuSWIFT = QtWidgets.QMenu(self.menubar)
+        self.menuSWIFT.setObjectName("menuSWIFT")
+        self.actionBefore_correction = QtWidgets.QAction(MainWindow)
+        self.actionBefore_correction.setObjectName("actionBefore_correction")
+        self.actionAfter_correction = QtWidgets.QAction(MainWindow)
+        self.actionAfter_correction.setObjectName("actionAfter_correction")
+        self.actionBefore_and_after_correction = QtWidgets.QAction(MainWindow)
+        self.actionBefore_and_after_correction.setObjectName("actionBefore_and_after_correction")
+        self.actionRun_SWIFT = QtWidgets.QAction(MainWindow)
+        self.actionRun_SWIFT.setObjectName("actionRun_SWIFT")
+        self.actionRun_SWIFT.triggered.connect(self.run_swift)
+        self.menuPlot.addAction(self.actionBefore_correction)
+        self.menuPlot.addAction(self.actionAfter_correction)
+        self.menuPlot.addAction(self.actionBefore_and_after_correction)
+        self.menuSWIFT.addAction(self.actionRun_SWIFT)
+        self.menubar.addAction(self.menuPlot.menuAction())
+        self.menubar.addAction(self.menuSWIFT.menuAction())
+
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -160,6 +181,12 @@ class Ui_MainWindow(object):
         self.imageDisplay.setText(_translate("MainWindow", "Select ROIs"))
         self.statusBar.setText(_translate("MainWindow", "Hi!"))
         self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar"))
+        self.menuPlot.setTitle(_translate("MainWindow", "Plot"))
+        self.menuSWIFT.setTitle(_translate("MainWindow", "SWIFT"))
+        self.actionBefore_correction.setText(_translate("MainWindow", "Before correction"))
+        self.actionAfter_correction.setText(_translate("MainWindow", "After correction"))
+        self.actionBefore_and_after_correction.setText(_translate("MainWindow", "Before and after correction"))
+        self.actionRun_SWIFT.setText(_translate("MainWindow", "Run SWIFT"))
 
     def getFiles(self):
         if self.inputFormat.currentText() == "RapidSTORM":
@@ -222,3 +249,8 @@ class Ui_MainWindow(object):
         self.optics = optics_widget.Ui_OPTICSanalysis()
         self.optics.setupUi(self.optics)
         self.optics.show()
+
+    def run_swift(self):
+        self.swift = swift_wrapper.Ui_swift_wrapper()
+        self.swift.setupUi(self.swift)
+        self.swift.show()

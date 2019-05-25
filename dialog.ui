@@ -279,6 +279,22 @@ p, li { white-space: pre-wrap; }
      <height>22</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuPlot">
+    <property name="title">
+     <string>Plot</string>
+    </property>
+    <addaction name="actionBefore_correction"/>
+    <addaction name="actionAfter_correction"/>
+    <addaction name="actionBEfire_and_after_correction"/>
+   </widget>
+   <widget class="QMenu" name="menuSWIFT">
+    <property name="title">
+     <string>SWIFT</string>
+    </property>
+    <addaction name="actionRun_SWIFT"/>
+   </widget>
+   <addaction name="menuPlot"/>
+   <addaction name="menuSWIFT"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -292,6 +308,26 @@ p, li { white-space: pre-wrap; }
     <bool>false</bool>
    </attribute>
   </widget>
+  <action name="actionBefore_correction">
+   <property name="text">
+    <string>Before correction</string>
+   </property>
+  </action>
+  <action name="actionAfter_correction">
+   <property name="text">
+    <string>After correction</string>
+   </property>
+  </action>
+  <action name="actionBEfire_and_after_correction">
+   <property name="text">
+    <string>Before and after correction</string>
+   </property>
+  </action>
+  <action name="actionRun_SWIFT">
+   <property name="text">
+    <string>Run SWIFT</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
