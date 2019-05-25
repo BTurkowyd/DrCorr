@@ -189,11 +189,9 @@ class Ui_MainWindow(object):
         sys.exit(self)
 
     def run_dr_corr(self):
-        try:
-            self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-            methods.dr_corr(self)
-        except:
-            print("Please select ROI first")
+        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
+        self.drCorr = methods.DriftCorrection(self, self)
+        self.drCorr.start()
 
     def run_remove_single_roi(self):
         try:
@@ -211,7 +209,9 @@ class Ui_MainWindow(object):
         methods.display_image(self)
     
     def run_nena(self):
-        methods.neNa(self, self.locfileName, self.imgFileName)
+        self.runNena = methods.NeNACalculation(self, self, self.locfileName, self.imgFileName)
+        self.runNena.start()
+        # methods.neNa(self, self.locfileName, self.imgFileName)
     
     def run_DBSCAN(self):
         self.dbscan = dbscan_widget.Ui_DBSCANanalysis()

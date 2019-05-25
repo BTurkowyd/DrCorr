@@ -16,7 +16,7 @@ from cv2 import (EVENT_LBUTTONDOWN, EVENT_LBUTTONUP, FONT_HERSHEY_SIMPLEX,
                  namedWindow, putText)
 from cv2 import rectangle as rectangler
 from cv2 import resize as resizer
-from cv2 import setMouseCallback, waitKey
+from cv2 import setMouseCallback, waitKey, getWindowProperty
 from numpy import loadtxt, shape, sqrt, zeros
 from scipy import spatial
 from scipy.optimize import curve_fit
@@ -27,6 +27,8 @@ from kalman_filter import KalmanFilterXY
 from nena import NeNA
 from particle import Particle
 from rois import ROIs
+
+from PyQt5.QtCore import QThread
 
 refPt = list()
 resize = None
@@ -101,134 +103,143 @@ def calc_NeNA(locs, localization, k, counting=0, nenaList=[]):
     NeNA_acc, NeNA_err = plot_NeNA(NeNA_dist, localization, k)
     output_folder = os.path.dirname(os.path.realpath(localization))
     hd = "the average localization accuracy by NeNA is at %.1f [nm]" % (float(NeNA_acc[0]))
-    outname = 'NeNA_lac_{0}_{1}.txt'.format(k + 1, counting)
+    outname = 'NeNA_loc_{0}_{1}.txt'.format(k + 1, counting)
     np.savetxt(str(output_folder) + "\\" + outname, NeNA_dist, fmt='%.5e', delimiter='   ', header=hd, comments='# ')
     nenaList.append(float(NeNA_acc[0]))
     return nenaList
 
 def neNa(app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
-    global image, resize, refPt
+    try:
+        global image, resize, refPt
 
-    iy, ix, iz = shape(image)
+        iy, ix, iz = shape(image)
 
-    if app.inputFormat.currentText() == "RapidSTORM":
-        loc = loadtxt(localization)
-    else:
-        loc = pd.read_csv(app.locfileName)
-
-    output_folder = os.path.dirname(os.path.realpath(localization))
-
-    regions = ROIs(refPt, ix, iy)
-    nena_regions = [NeNA(r, firstFrame, lastFrame, windowJump, windowSize, app.inputFormat.currentText()) for r in regions.rois]
-
-    app.statusBar.setText("Calculating NeNA values")
-
-    for n in nena_regions:
-        n.nena_roi(loc, firstFrame, lastFrame, windowJump, windowSize)
-
-    k = 0
-    app.progressBar.setMaximum(len(nena_regions))
-    app.progressBar.setValue(k)
-
-    for i in range(len(nena_regions)):
-        if (windowJump or windowSize) == 0:
-            calc_NeNA(nena_regions[i].nena, localization, i)
-
+        if app.inputFormat.currentText() == "RapidSTORM":
+            loc = loadtxt(localization)
         else:
-            counting = 0
-            nenaList = []
-            nenaSeries = []
-            for j in range(len(nena_regions[i].nena)):
-                calc_NeNA(nena_regions[i].nena[j], localization, i, counting, nenaList)
-                counting += 1
-            np.savetxt(str(output_folder) + "\\NeNA_summary_" + str(i) + ".txt", nenaList, fmt='%.5e')
-            nenaSeries.append(nenaList)
-        
-        k += 1
+            loc = pd.read_csv(app.locfileName)
+
+        output_folder = os.path.dirname(os.path.realpath(localization))
+
+        regions = ROIs(refPt, ix, iy)
+        nena_regions = [NeNA(r, firstFrame, lastFrame, windowJump, windowSize, app.inputFormat.currentText()) for r in regions.rois]
+
+        app.statusBar.setText("Calculating NeNA values")
+
+        for n in nena_regions:
+            n.nena_roi(loc, firstFrame, lastFrame, windowJump, windowSize)
+
+        k = 0
+        app.progressBar.setMaximum(len(nena_regions))
         app.progressBar.setValue(k)
-    
-    app.statusBar.setText("NeNA calculated!")
+
+        for i in range(len(nena_regions)):
+            if (windowJump or windowSize) == 0:
+                nena_value = calc_NeNA(nena_regions[i].nena, localization, i)
+
+            else:
+                counting = 0
+                nenaList = []
+                nenaSeries = []
+                for j in range(len(nena_regions[i].nena)):
+                    calc_NeNA(nena_regions[i].nena[j], localization, i, counting, nenaList)
+                    counting += 1
+                np.savetxt(str(output_folder) + "\\NeNA_summary_" + str(i) + ".txt", nenaList, fmt='%.5e')
+                nenaSeries.append(nenaList)
+            
+
+            k += 1
+            app.progressBar.setValue(k)
+        
+        np.savetxt(str(output_folder) + "\\NeNA_summary_table.txt", nena_value, fmt='%.2f')
+
+        app.statusBar.setText("NeNA calculated!")
+    except:
+        print("No ROIs selected")
 
 def dr_corr(app):
-    global image, resize, refPt
+    try:
+        global image, resize, refPt
 
-    iy, ix, iz = shape(image)
+        iy, ix, iz = shape(image)
 
-    if app.inputFormat.currentText() == "RapidSTORM":
-        loc = loadtxt(app.locfileName)
-        particles = [Particle(p[0], p[1], p[2], p[3]) for p in loc]
-    else:
-        loc = pd.read_csv(app.locfileName)
-        particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
+        if app.inputFormat.currentText() == "RapidSTORM":
+            loc = loadtxt(app.locfileName)
+            particles = [Particle(p[0], p[1], p[2], p[3]) for p in loc]
+        else:
+            loc = pd.read_csv(app.locfileName)
+            particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
 
-    regions = ROIs(refPt, ix, iy)
+        regions = ROIs(refPt, ix, iy)
 
-    fiducials = [Fiducial(r, app.fidu_intensity) for r in regions.rois]
+        fiducials = [Fiducial(r, app.fidu_intensity) for r in regions.rois]
 
-    k = 0
-    app.progressBar.setMaximum(len(fiducials))
-    app.progressBar.setValue(k)
-    app.statusBar.setText("Extracting fiducial markers")
-
-    for f in fiducials:
-        f.extract_fiducial(loc, app.inputFormat.currentText())
-        f.rel_drift(app.inputFormat.currentText())
-        f.stretch_fiducials(loc, app.inputFormat.currentText())
-        k += 1
+        k = 0
+        app.progressBar.setMaximum(len(fiducials))
         app.progressBar.setValue(k)
+        app.statusBar.setText("Extracting fiducial markers")
 
-    drift = Drift(fiducials)
-
-    k = 0
-    app.progressBar.setMaximum(len(loc))
-    app.progressBar.setValue(k)
-    app.statusBar.setText("Applying the drift correction")
-
-    for p in particles:
-        p.load_drift(drift)
-        p.apply_drift()
-        k += 1
-        if k % 1000 == 0:
-            app.progressBar.setValue(k)
-    app.progressBar.setValue(k)    
-
-    with open(app.locfileName) as input_file:
-        head = list(islice(input_file, 1))
-
-    if app.inputFormat.currentText() == "RapidSTORM":
-        with open(app.locfileName.split('.')[0] + "_corrected.txt", "w") as final_file:
-            final_file.write(str(head[0]))
-            k = 0
-            app.progressBar.setValue(k)
-            app.progressBar.setMaximum(len(loc))
-            app.statusBar.setText("Saving a new localization file")
-            for p in particles:
-                final_file.write('%1.1f %1.1f %1.0f %1.0f\n' % (p.new_x, p.new_y, p.t, p.I))
-                k += 1
-                if k % 1000 == 0:
-                    app.progressBar.setValue(k)
-            app.progressBar.setValue(k)
-    else:
-        with open(app.locfileName.split('.')[0] + "_corrected.csv", "w") as final_file:
-            final_file.write('"id","frame","x [nm]","y [nm]","sigma [nm]","intensity [photon]","offset [photon]","bkgstd [photon]","chi2","uncertainty_xy [nm]"\n')
-            k = 0
-            app.progressBar.setValue(k)
-            app.progressBar.setMaximum(len(loc))
-            app.statusBar.setText("Saving a new localization file")
-            for p in particles:
-                final_file.write("%1.0f,%1.0f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f\n" % (p.id, p.t, p.new_x, p.new_y, p.sigma, p.I, p.offset, p.bkgstd, p.chi2, p.uncertainty))
-                k += 1
-                if k % 1000 == 0:
-                    app.progressBar.setValue(k)
+        for f in fiducials:
+            f.extract_fiducial(loc, app.inputFormat.currentText())
+            f.rel_drift(app.inputFormat.currentText())
+            f.stretch_fiducials(loc, app.inputFormat.currentText())
+            k += 1
             app.progressBar.setValue(k)
 
-    output_folder = os.path.dirname(os.path.realpath(app.locfileName))
-    with open(output_folder + "\\" + "drift_trace.txt", "w") as drift_file:
-        for dx, dy in zip(drift.smooth_x, drift.smooth_y):
-            drift_file.write('%1.3f\t%1.3f\n' % (dx, dy))
-    
-    app.statusBar.setText("Done!")
-    print('DONE!!!')
+        drift = Drift(fiducials)
+
+        k = 0
+        app.progressBar.setMaximum(len(loc))
+        app.progressBar.setValue(k)
+        app.statusBar.setText("Applying the drift correction")
+
+        for p in particles:
+            p.load_drift(drift)
+            p.apply_drift()
+            k += 1
+            if k % 1000 == 0:
+                app.progressBar.setValue(k)
+        app.progressBar.setValue(k)    
+
+        with open(app.locfileName) as input_file:
+            head = list(islice(input_file, 1))
+
+        if app.inputFormat.currentText() == "RapidSTORM":
+            with open(app.locfileName.split('.')[0] + "_corrected.txt", "w") as final_file:
+                final_file.write(str(head[0]))
+                k = 0
+                app.progressBar.setValue(k)
+                app.progressBar.setMaximum(len(loc))
+                app.statusBar.setText("Saving a new localization file")
+                for p in particles:
+                    final_file.write('%1.1f %1.1f %1.0f %1.0f\n' % (p.new_x, p.new_y, p.t, p.I))
+                    k += 1
+                    if k % 1000 == 0:
+                        app.progressBar.setValue(k)
+                app.progressBar.setValue(k)
+        else:
+            with open(app.locfileName.split('.')[0] + "_corrected.csv", "w") as final_file:
+                final_file.write('"id","frame","x [nm]","y [nm]","sigma [nm]","intensity [photon]","offset [photon]","bkgstd [photon]","chi2","uncertainty_xy [nm]"\n')
+                k = 0
+                app.progressBar.setValue(k)
+                app.progressBar.setMaximum(len(loc))
+                app.statusBar.setText("Saving a new localization file")
+                for p in particles:
+                    final_file.write("%1.0f,%1.0f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f\n" % (p.id, p.t, p.new_x, p.new_y, p.sigma, p.I, p.offset, p.bkgstd, p.chi2, p.uncertainty))
+                    k += 1
+                    if k % 1000 == 0:
+                        app.progressBar.setValue(k)
+                app.progressBar.setValue(k)
+
+        output_folder = os.path.dirname(os.path.realpath(app.locfileName))
+        with open(output_folder + "\\" + "drift_trace.txt", "w") as drift_file:
+            for dx, dy in zip(drift.smooth_x, drift.smooth_y):
+                drift_file.write('%1.3f\t%1.3f\n' % (dx, dy))
+        
+        app.statusBar.setText("Done!")
+        print('DONE!!!')
+    except:
+        print("No ROIs selected")
 
 def display_image(app):
     global image, resize, refPt
@@ -269,7 +280,12 @@ def display_image(app):
             remove_all_rois()
 
         # if the 'c' key is pressed, break from the loop
-        elif key == ord("c"):
+        if key == ord("c"):
+            destroyAllWindows()
+            app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
+            break
+        
+        if getWindowProperty("image",1) < 1:
             destroyAllWindows()
             app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
             break
@@ -286,3 +302,24 @@ def remove_all_rois():
     global refPt, resize
     refPt = list()
     resize = resizer(image, (1260, 1080))
+
+class DriftCorrection(QThread):
+    def __init__(self, parent, app):
+        self.app = app
+        super().__init__()
+    def run(self):
+        dr_corr(self.app)
+
+
+class NeNACalculation(QThread):
+    def __init__(self, parent, app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
+        self.app = app
+        self.localization = localization
+        self.image_png = image_png
+        self.first_frame = firstFrame
+        self.last_frame = lastFrame
+        self.window_jump = windowJump
+        self.window_size = windowSize
+        super().__init__()
+    def run(self):
+        neNa(self.app, self.localization, self.image_png, self.first_frame, self.last_frame, self.window_jump, self.window_size)
