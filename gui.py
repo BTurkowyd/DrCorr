@@ -200,6 +200,7 @@ class Ui_MainWindow(object):
         if self.locfileName and self.imgFileName:
             print(self.locfileName)
             methods.refPt = []
+            methods.load_particles(self)
             self.imageDisplay.setDisabled(False)
             self.delLastROI.setDisabled(False)
             self.delAllROIs.setDisabled(False)

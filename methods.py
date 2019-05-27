@@ -33,6 +33,7 @@ from PyQt5.QtCore import QThread
 refPt = list()
 resize = None
 image = None
+particles = []
 
 def min_dist(point, locs):
     d = sqrt(np.square(locs[:, 0] - point[0]) + np.square(locs[:, 1] - point[1]))
@@ -165,10 +166,8 @@ def dr_corr(app):
 
         if app.inputFormat.currentText() == "RapidSTORM":
             loc = loadtxt(app.locfileName)
-            particles = [Particle(p[0], p[1], p[2], p[3]) for p in loc]
         else:
             loc = pd.read_csv(app.locfileName)
-            particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
 
         regions = ROIs(refPt, ix, iy)
 
@@ -240,6 +239,19 @@ def dr_corr(app):
         print('DONE!!!')
     except:
         print("No ROIs selected")
+
+def load_particles(app):
+    try:
+        global image, resize, refPt, particles
+
+        if app.inputFormat.currentText() == "RapidSTORM":
+            loc = loadtxt(app.locfileName)
+            particles = [Particle(p[0], p[1], p[2], p[3]) for p in loc]
+        else:
+            loc = pd.read_csv(app.locfileName)
+            particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
+    except:
+        print("Localization file not loaded")
 
 def display_image(app):
     global image, resize, refPt
