@@ -6,7 +6,7 @@ Created on Tue Feb 27 16:06:06 2018
 """
 
 class Particle:
-    def __init__(self, x, y, t, I, ident=None, sigma=None, offset=None, bkgstd=None, chi2=None, uncertainty=None, dbscan=-1, optics=-1):
+    def __init__(self, x, y, t, I, ident=None, sigma=None, offset=None, bkgstd=None, chi2=None, uncertainty=None):
         self.x = x
         self.y = y
         self.t = t
@@ -17,8 +17,9 @@ class Particle:
         self.bkgstd = bkgstd
         self.chi2 = chi2
         self.uncertainty = uncertainty
-        self.dbscan = dbscan
-        self.optics = optics
+        self.dbscan = -1
+        self.optics = -1
+        self.optics_rd = -1
         
     def load_drift(self, drift):
         self.drift = drift.drift[int(self.t)]

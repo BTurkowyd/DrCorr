@@ -7,6 +7,11 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from numpy import shape
+
+import optics
+import methods
+import rois
 
 class Ui_OPTICSanalysis(QtWidgets.QMainWindow):
     def setupUi(self, OPTICSanalysis):
@@ -14,9 +19,10 @@ class Ui_OPTICSanalysis(QtWidgets.QMainWindow):
         OPTICSanalysis.resize(400, 300)
         self.centralwidget = QtWidgets.QWidget(OPTICSanalysis)
         self.centralwidget.setObjectName("centralwidget")
-        self.runDBSCAN = QtWidgets.QPushButton(self.centralwidget)
-        self.runDBSCAN.setGeometry(QtCore.QRect(230, 30, 150, 150))
-        self.runDBSCAN.setObjectName("runDBSCAN")
+        self.runOPTICS = QtWidgets.QPushButton(self.centralwidget)
+        self.runOPTICS.setGeometry(QtCore.QRect(230, 30, 150, 150))
+        self.runOPTICS.setObjectName("runOPTICS")
+        self.runOPTICS.clicked.connect(self.run_optics)
         self.progressBar = QtWidgets.QProgressBar(self.centralwidget)
         self.progressBar.setGeometry(QtCore.QRect(35, 200, 350, 40))
         self.progressBar.setProperty("value", 0)
@@ -51,7 +57,7 @@ class Ui_OPTICSanalysis(QtWidgets.QMainWindow):
     def retranslateUi(self, OPTICSanalysis):
         _translate = QtCore.QCoreApplication.translate
         OPTICSanalysis.setWindowTitle(_translate("OPTICSanalysis", "OPTICS analysis"))
-        self.runDBSCAN.setText(_translate("OPTICSanalysis", "Run OPTICS"))
+        self.runOPTICS.setText(_translate("OPTICSanalysis", "Run OPTICS"))
         self.epsilonLabel.setText(_translate("OPTICSanalysis", "Upper limit (nm)"))
         self.minPtsField.setHtml(_translate("OPTICSanalysis", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
@@ -63,5 +69,14 @@ class Ui_OPTICSanalysis(QtWidgets.QMainWindow):
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.875pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">1000</p></body></html>"))
-        self.minPtsLabel.setText(_translate("OPTICSanalysis", "Upper limit (nm)"))
+        self.minPtsLabel.setText(_translate("OPTICSanalysis", "Min pts (>1)"))
 
+    def run_optics(self):
+        iy, ix, iz = shape(methods.image)
+        self.regions = rois.ROIs(methods.refPt, ix, iy)
+
+        self.clusters = [optics.OPTICS_class(r, float(self.minPtsField.toPlainText()), float(self.epsilonField.toPlainText())) for r in self.regions.rois]
+
+        for i, cluster in enumerate(self.clusters):
+            cluster.run_optics()
+            cluster.write(i)
