@@ -51,15 +51,15 @@ class Fiducial:
         if inputFormat == "RapidSTORM":
             self.stretch = zeros((int(loc[-1,2])+1, 4))
         else:
-            self.stretch = zeros((int(loc.values[-1,2])+1, 4))
+            self.stretch = zeros((int(loc.values[-1,1])+1, 4))
             
         for x, y, t, intensity in zip(self.rel_x, self.rel_y, self.t, self.intensity):
             self.stretch[int(t), 0] = x
             self.stretch[int(t), 1] = y
             self.stretch[int(t), 2] = t
             self.stretch[int(t), 3] = intensity
-        self.kalman_stretch = KalmanFilterXY(self.stretch[:,:2])
-        print("Kalman")
-        self.kalman_stretch.run()
-        self.stretch[:,0] = self.kalman_stretch.corrected_x
-        self.stretch[:,1] = self.kalman_stretch.corrected_y
+        # self.kalman_stretch = KalmanFilterXY(self.stretch[:,:2])
+        # print("Kalman")
+        # self.kalman_stretch.run()
+        # self.stretch[:,0] = self.kalman_stretch.corrected_x
+        # self.stretch[:,1] = self.kalman_stretch.corrected_y

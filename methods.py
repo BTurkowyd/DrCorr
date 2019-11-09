@@ -224,7 +224,7 @@ def dr_corr(app):
                 app.progressBar.setMaximum(len(loc))
                 app.statusBar.setText("Saving a new localization file")
                 for p in particles:
-                    final_file.write("%1.0f,%1.0f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f,%1.1f\n" % (p.id, p.t, p.new_x, p.new_y, p.sigma, p.I, p.offset, p.bkgstd, p.chi2, p.uncertainty))
+                    final_file.write("%1.0f,%1.0f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f\n" % (p.id, p.t, p.new_x, p.new_y, p.sigma, p.I, p.offset, p.bkgstd, p.chi2, p.uncertainty))
                     k += 1
                     if k % 1000 == 0:
                         app.progressBar.setValue(k)

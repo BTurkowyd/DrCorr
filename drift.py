@@ -4,8 +4,9 @@ Created on Tue Feb 27 16:08:03 2018
 
 @author: turkowyd
 """
-from numpy import empty, concatenate, nan, nanmean, shape, isnan, array
+from numpy import empty, concatenate, nan, nanmean, shape, isnan, array, savetxt
 from kalman_filter import KalmanFilterXY
+from scipy.signal import savgol_filter
 
 class Drift:
     def __init__(self, fiducials):
@@ -38,9 +39,8 @@ class Drift:
         self.av_rel_x = nanmean(self.rel_x, axis = 1)  
         self.av_rel_y = nanmean(self.rel_y, axis = 1)
         
-        self.smooth_x =self.av_rel_x
-        self.smooth_y =self.av_rel_y
-        
+        self.smooth_x = self.av_rel_x
+        self.smooth_y = self.av_rel_y
         
         for i in range(len(self.smooth_x)):
             if isnan(self.smooth_x[i]) == True:
@@ -49,6 +49,9 @@ class Drift:
         for i in range(len(self.smooth_y)):
             if isnan(self.smooth_y[i]) == True:
                 self.smooth_y[i] = 0
+
+        self.smooth_x = savgol_filter(self.smooth_x, 4001, 2)
+        self.smooth_y = savgol_filter(self.smooth_y, 4001, 2)
                 
         self.t = array(range(len(self.smooth_x)))
         
