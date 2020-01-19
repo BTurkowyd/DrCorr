@@ -159,6 +159,10 @@ def neNa(app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, 
         print("No ROIs selected")
 
 def dr_corr(app):
+
+    regions = None
+    plt.close()
+
     try:
         global image, resize, refPt
 
@@ -231,6 +235,25 @@ def dr_corr(app):
                 app.progressBar.setValue(k)
 
         output_folder = os.path.dirname(os.path.realpath(app.locfileName))
+
+
+        for f in fiducials:
+            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=0.5)
+            plt.plot(f.stretch[:,2], f.stretch[:,1], '--', linewidth=0.5)
+        
+        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=1)
+        plt.plot(drift.t, drift.smooth_y, 'k--', label='Y-drift', linewidth=1)
+
+        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=0.5)
+        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k--', linewidth=0.5)
+        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=0.5)
+        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k--', linewidth=0.5)
+
+        plt.xlabel('Frame')
+        plt.ylabel('Drift (nm)')
+        # plt.legend()
+        plt.savefig(output_folder + "\\" + "drift_trace.png")
+
         with open(output_folder + "\\" + "drift_trace.txt", "w") as drift_file:
             for dx, dy in zip(drift.smooth_x, drift.smooth_y):
                 drift_file.write('%1.3f\t%1.3f\n' % (dx, dy))
@@ -239,6 +262,59 @@ def dr_corr(app):
         print('DONE!!!')
     except:
         print("No ROIs selected")
+
+def analyze_fiducials(app):
+
+    regions = None
+    plt.clf()
+
+    try:
+        global image, resize, refPt
+
+        iy, ix, iz = shape(image)
+
+        if app.inputFormat.currentText() == "RapidSTORM":
+            loc = loadtxt(app.locfileName)
+        else:
+            loc = pd.read_csv(app.locfileName)
+
+        regions = ROIs(refPt, ix, iy)
+
+        fiducials = [Fiducial(r, app.fidu_intensity) for r in regions.rois]
+
+        k = 0
+        app.progressBar.setMaximum(len(fiducials))
+        app.progressBar.setValue(k)
+        app.statusBar.setText("Extracting fiducial markers")
+
+        for f in fiducials:
+            f.extract_fiducial(loc, app.inputFormat.currentText())
+            f.rel_drift(app.inputFormat.currentText())
+            f.stretch_fiducials(loc, app.inputFormat.currentText())
+            k += 1
+            app.progressBar.setValue(k)
+
+        drift = Drift(fiducials)
+
+
+        for f in fiducials:
+            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=0.5)
+            plt.plot(f.stretch[:,2], f.stretch[:,1], '--', linewidth=0.5)
+        
+        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=1)
+        plt.plot(drift.t, drift.smooth_y, 'k--', label='Y-drift', linewidth=1)
+
+        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=0.5)
+        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k--', linewidth=0.5)
+        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=0.5)
+        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k--', linewidth=0.5)
+
+        plt.xlabel('Frame')
+        plt.ylabel('Drift (nm)')
+        plt.legend()
+        plt.show()
+    except:
+        print("No beads selected")
 
 def load_particles(app):
     try:
@@ -321,6 +397,7 @@ class DriftCorrection(QThread):
         super().__init__()
     def run(self):
         dr_corr(self.app)
+        self.exit()
 
 
 class NeNACalculation(QThread):

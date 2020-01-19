@@ -4,14 +4,16 @@ Created on Tue Feb 27 16:08:03 2018
 
 @author: turkowyd
 """
-from numpy import empty, concatenate, nan, nanmean, shape, isnan, array, savetxt
+from numpy import empty, concatenate, nan, nanmean, shape, isnan, array, savetxt, linspace, nanstd
 from kalman_filter import KalmanFilterXY
 from scipy.signal import savgol_filter
+import matplotlib.pyplot as plt
 
 class Drift:
     def __init__(self, fiducials):
         self.fiducials = fiducials
         self.longest = 0
+        self.window = 401
         
         for f in self.fiducials:
             if len(f.stretch) > self.longest:
@@ -38,20 +40,33 @@ class Drift:
                 
         self.av_rel_x = nanmean(self.rel_x, axis = 1)  
         self.av_rel_y = nanmean(self.rel_y, axis = 1)
+
+        self.std_rel_x = nanstd(self.rel_x, axis = 1)  
+        self.std_rel_y = nanstd(self.rel_y, axis = 1)
         
         self.smooth_x = self.av_rel_x
         self.smooth_y = self.av_rel_y
+
+        self.smooth_std_x = self.std_rel_x
+        self.smooth_std_y = self.std_rel_y
         
         for i in range(len(self.smooth_x)):
             if isnan(self.smooth_x[i]) == True:
                 self.smooth_x[i] = 0
-                
+            if isnan(self.smooth_std_x[i]) == True:
+                self.smooth_std_x[i] = 0
+
         for i in range(len(self.smooth_y)):
             if isnan(self.smooth_y[i]) == True:
                 self.smooth_y[i] = 0
+            if isnan(self.smooth_std_y[i]) == True:
+                self.smooth_std_y[i] = 0
 
-        self.smooth_x = savgol_filter(self.smooth_x, 4001, 2)
-        self.smooth_y = savgol_filter(self.smooth_y, 4001, 2)
+        self.smooth_x = savgol_filter(self.smooth_x, self.window, 2, mode= 'mirror')
+        self.smooth_y = savgol_filter(self.smooth_y, self.window, 2, mode= 'mirror')
+    
+        self.smooth_std_x = savgol_filter(self.smooth_std_x, self.window, 2, mode= 'mirror')
+        self.smooth_std_y = savgol_filter(self.smooth_std_y, self.window, 2, mode= 'mirror')
                 
         self.t = array(range(len(self.smooth_x)))
         

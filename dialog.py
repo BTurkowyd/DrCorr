@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dialog.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.3
+# Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -39,7 +39,7 @@ class Ui_MainWindow(object):
         self.loadData = QtWidgets.QPushButton(self.centralwidget)
         self.loadData.setGeometry(QtCore.QRect(20, 170, 200, 40))
         self.loadData.setToolTip("")
-        self.loadData.setToolTipDuration(-1)
+        self.loadData.setProperty("toolTipDuration", -1)
         self.loadData.setObjectName("loadData")
         self.delLastROI = QtWidgets.QPushButton(self.centralwidget)
         self.delLastROI.setGeometry(QtCore.QRect(20, 270, 200, 40))
@@ -71,12 +71,15 @@ class Ui_MainWindow(object):
         self.imageDisplay = QtWidgets.QPushButton(self.centralwidget)
         self.imageDisplay.setGeometry(QtCore.QRect(20, 220, 200, 40))
         self.imageDisplay.setToolTip("")
-        self.imageDisplay.setToolTipDuration(-1)
+        self.imageDisplay.setProperty("toolTipDuration", -1)
         self.imageDisplay.setObjectName("imageDisplay")
         self.statusBar = QtWidgets.QLabel(self.centralwidget)
         self.statusBar.setGeometry(QtCore.QRect(250, 760, 200, 40))
         self.statusBar.setAlignment(QtCore.Qt.AlignCenter)
         self.statusBar.setObjectName("statusBar")
+        self.analyzeFiducials = QtWidgets.QPushButton(self.centralwidget)
+        self.analyzeFiducials.setGeometry(QtCore.QRect(230, 320, 200, 40))
+        self.analyzeFiducials.setObjectName("analyzeFiducials")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 700, 22))
@@ -118,8 +121,8 @@ class Ui_MainWindow(object):
         self.fiducialThreshold.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.875pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">10000</p></body></html>"))
+"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'MS Shell Dlg 2\'; font-size:8pt;\">10000</span></p></body></html>"))
         self.fiducialThresholdLabel.setText(_translate("MainWindow", "Fiducial Threshold:"))
         self.loadData.setText(_translate("MainWindow", "Load data"))
         self.delLastROI.setText(_translate("MainWindow", "Delete last ROI"))
@@ -133,6 +136,7 @@ class Ui_MainWindow(object):
         self.exitButton.setText(_translate("MainWindow", "Quit"))
         self.imageDisplay.setText(_translate("MainWindow", "Image display"))
         self.statusBar.setText(_translate("MainWindow", "Hi!"))
+        self.analyzeFiducials.setText(_translate("MainWindow", "Analyze fiducials"))
         self.menuPlot.setTitle(_translate("MainWindow", "Plot"))
         self.menuSWIFT.setTitle(_translate("MainWindow", "SWIFT"))
         self.toolBar.setWindowTitle(_translate("MainWindow", "toolBar"))

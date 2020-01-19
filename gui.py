@@ -68,6 +68,12 @@ class Ui_MainWindow(object):
         self.delAllROIs.clicked.connect(self.runremove_all_rois)
         self.delAllROIs.setDisabled(True)
 
+        self.analyzeFiducials = QtWidgets.QPushButton(self.centralwidget)
+        self.analyzeFiducials.setGeometry(QtCore.QRect(230, 320, 200, 40))
+        self.analyzeFiducials.setObjectName("analyzeFiducials")
+        self.analyzeFiducials.clicked.connect(self.analyze_fiducials)
+        self.analyzeFiducials.setDisabled(True)
+
         self.driftCorrection = QtWidgets.QPushButton(self.centralwidget)
         self.driftCorrection.setGeometry(QtCore.QRect(20, 370, 200, 40))
         self.driftCorrection.setObjectName("driftCorrection")
@@ -171,6 +177,7 @@ class Ui_MainWindow(object):
         self.loadData.setText(_translate("MainWindow", "Load data"))
         self.delLastROI.setText(_translate("MainWindow", "Delete last ROI"))
         self.delAllROIs.setText(_translate("MainWindow", "Delete all ROIs"))
+        self.analyzeFiducials.setText(_translate("MainWindow", "Analyze fiducials"))
         self.driftCorrection.setText(_translate("MainWindow", "Drift correction"))
         self.checkBox.setText(_translate("MainWindow", "No corr. terms in NeNA"))
         self.calculateNeNA.setText(_translate("MainWindow", "Calculate NeNA"))
@@ -204,6 +211,7 @@ class Ui_MainWindow(object):
             self.imageDisplay.setDisabled(False)
             self.delLastROI.setDisabled(False)
             self.delAllROIs.setDisabled(False)
+            self.analyzeFiducials.setDisabled(False)
             self.driftCorrection.setDisabled(False)
             self.calculateNeNA.setDisabled(False)
             self.calculateTemporalNeNA.setDisabled(False)
@@ -220,6 +228,11 @@ class Ui_MainWindow(object):
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
         self.drCorr = methods.DriftCorrection(self, self)
         self.drCorr.start()
+    
+    def analyze_fiducials(self):
+        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
+        self.runAnalyzeFiducials = methods.analyze_fiducials(self)
+        # self.runAnalyzeFiducials.start()
 
     def run_remove_single_roi(self):
         try:
