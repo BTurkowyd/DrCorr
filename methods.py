@@ -11,7 +11,7 @@ from itertools import islice
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from cv2 import (EVENT_LBUTTONDOWN, EVENT_LBUTTONUP, FONT_HERSHEY_SIMPLEX,
+from cv2 import (EVENT_LBUTTONDOWN, EVENT_LBUTTONUP, FONT_HERSHEY_DUPLEX,
                  LINE_AA, destroyAllWindows, imread, imshow, imwrite,
                  namedWindow, putText)
 from cv2 import rectangle as rectangler
@@ -35,6 +35,13 @@ refPt = list()
 resize = None
 image = None
 particles = []
+
+
+def number_gen():
+    i = 1
+    while True:
+        yield i
+        i += 1
 
 def min_dist(point, locs):
     d = sqrt(np.square(locs[:, 0] - point[0]) + np.square(locs[:, 1] - point[1]))
@@ -167,6 +174,8 @@ def dr_corr(app):
     try:
         global image, resize, refPt
 
+        imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
+
         iy, ix, iz = shape(image)
 
         if app.inputFormat.currentText() == "RapidSTORM":
@@ -244,9 +253,9 @@ def dr_corr(app):
 
         for i, f in enumerate(fiducials):
             plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(i), alpha=0.5)
+            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
             plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(i), alpha=0.5)
+            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
         
         plt.subplot(211)
         plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
@@ -256,6 +265,7 @@ def dr_corr(app):
         plt.subplot(211)
         plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
         plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
+        plt.grid(True)
 
         plt.xlabel('Frame')
         plt.ylabel('X-Drift (nm)')
@@ -264,6 +274,7 @@ def dr_corr(app):
         plt.subplot(212)
         plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
         plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
+        plt.grid(True)
 
         plt.xlabel('Frame')
         plt.ylabel('Y-Drift (nm)')
@@ -276,11 +287,13 @@ def dr_corr(app):
         plt.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
         plt.xlabel('Frame')
         plt.ylabel('X-SE (nm)')
+        plt.grid(True)
 
         plt.subplot(212)
         plt.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
         plt.xlabel('Frame')
         plt.ylabel('Y-SE (nm)')
+        plt.grid(True)
         plt.savefig(output_folder + "\\" + "fiducial_st_err.png")
         
 
@@ -300,6 +313,8 @@ def analyze_fiducials(app):
 
     try:
         global image, resize, refPt
+
+        imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
 
         iy, ix, iz = shape(image)
 
@@ -332,9 +347,9 @@ def analyze_fiducials(app):
 
         for i, f in enumerate(fiducials):
             plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(i), alpha=0.5)
+            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
             plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(i), alpha=0.5)
+            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
         
         plt.subplot(211)
         plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
@@ -344,6 +359,7 @@ def analyze_fiducials(app):
         plt.subplot(211)
         plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
         plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
+        plt.grid(True)
 
         plt.xlabel('Frame')
         plt.ylabel('X-Drift (nm)')
@@ -352,6 +368,7 @@ def analyze_fiducials(app):
         plt.subplot(212)
         plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
         plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
+        plt.grid(True)
 
         plt.xlabel('Frame')
         plt.ylabel('Y-Drift (nm)')
@@ -363,11 +380,13 @@ def analyze_fiducials(app):
         plt.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
         plt.xlabel('Frame')
         plt.ylabel('X-SE (nm)')
+        plt.grid(True)
 
         plt.subplot(212)
         plt.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
         plt.xlabel('Frame')
         plt.ylabel('Y-SE (nm)')
+        plt.grid(True)
 
         plt.show()
 
@@ -390,6 +409,8 @@ def load_particles(app):
 def display_image(app):
     global image, resize, refPt
 
+    numbers = number_gen()
+
     def click_and_crop(event, x, y, flags, param):
         global refPt
         if event == EVENT_LBUTTONDOWN:
@@ -398,6 +419,7 @@ def display_image(app):
         elif event == EVENT_LBUTTONUP:
             refPt.append((x, y))
             rectangler(resize, refPt[-2], refPt[-1], (0, 255, 0), 2)
+            putText(resize, str(next(numbers)), (refPt[-2][0] + 3, refPt[-2][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
             imshow("image", resize)
 
     # load the image, clone it, and setup the mouse callback function
@@ -410,6 +432,7 @@ def display_image(app):
     if len(refPt) > 0:
         for i in range(0,len(refPt), 2):
             rectangler(resize, refPt[i], refPt[i+1], (0, 255, 0), 2)
+            putText(resize, str(next(numbers)), (refPt[i][0] + 3, refPt[i+1][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
 
     # keep looping until the 'q' key is pressed
     while True:
@@ -443,6 +466,7 @@ def load_ROIS(app):
         regions = pickle.load(file)    
 
     refPt = regions.refPt
+    numbers = number_gen()
 
     def click_and_crop(event, x, y, flags, param):
         global refPt
@@ -452,6 +476,7 @@ def load_ROIS(app):
         elif event == EVENT_LBUTTONUP:
             refPt.append((x, y))
             rectangler(resize, refPt[-2], refPt[-1], (0, 255, 0), 2)
+            putText(resize, str(next(numbers)), (refPt[-2][0] + 3, refPt[-2][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
             imshow("image", resize)
 
     # load the image, clone it, and setup the mouse callback function
@@ -464,6 +489,7 @@ def load_ROIS(app):
     if len(refPt) > 0:
         for i in range(0,len(refPt), 2):
             rectangler(resize, refPt[i], refPt[i+1], (0, 255, 0), 2)
+            putText(resize, str(next(numbers)), (refPt[i][0] + 3, refPt[i+1][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
 
     # keep looping until the 'q' key is pressed
     while True:
@@ -491,12 +517,16 @@ def load_ROIS(app):
             break
 
 def remove_single_roi():
+
+    numbers = number_gen()
+    
     global refPt, resize
     del refPt[-2:]
     resize = resizer(image, (1260, 1080))
 
     for i in range(0,len(refPt), 2):
         rectangler(resize, refPt[i], refPt[i+1], (0, 255, 0), 2)
+        putText(resize, str(next(numbers)), (refPt[i][0] + 3, refPt[i+1][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
 
 def remove_all_rois():
     global refPt, resize
