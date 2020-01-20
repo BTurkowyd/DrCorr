@@ -74,6 +74,12 @@ class Ui_MainWindow(object):
         self.analyzeFiducials.clicked.connect(self.analyze_fiducials)
         self.analyzeFiducials.setDisabled(True)
 
+        self.loadROIs = QtWidgets.QPushButton(self.centralwidget)
+        self.loadROIs.setGeometry(QtCore.QRect(230, 370, 200, 40))
+        self.loadROIs.setObjectName("loadROIs")
+        self.loadROIs.clicked.connect(self.load_ROIS)
+        self.loadROIs.setDisabled(True)
+
         self.driftCorrection = QtWidgets.QPushButton(self.centralwidget)
         self.driftCorrection.setGeometry(QtCore.QRect(20, 370, 200, 40))
         self.driftCorrection.setObjectName("driftCorrection")
@@ -179,6 +185,7 @@ class Ui_MainWindow(object):
         self.delAllROIs.setText(_translate("MainWindow", "Delete all ROIs"))
         self.analyzeFiducials.setText(_translate("MainWindow", "Analyze fiducials"))
         self.driftCorrection.setText(_translate("MainWindow", "Drift correction"))
+        self.loadROIs.setText(_translate("MainWindow", "Load ROIs"))
         self.checkBox.setText(_translate("MainWindow", "No corr. terms in NeNA"))
         self.calculateNeNA.setText(_translate("MainWindow", "Calculate NeNA"))
         self.calculateTemporalNeNA.setText(_translate("MainWindow", "Calc. temp. NeNA"))
@@ -212,6 +219,7 @@ class Ui_MainWindow(object):
             self.delLastROI.setDisabled(False)
             self.delAllROIs.setDisabled(False)
             self.analyzeFiducials.setDisabled(False)
+            self.loadROIs.setDisabled(False)
             self.driftCorrection.setDisabled(False)
             self.calculateNeNA.setDisabled(False)
             self.calculateTemporalNeNA.setDisabled(False)
@@ -226,13 +234,24 @@ class Ui_MainWindow(object):
 
     def run_dr_corr(self):
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-        self.drCorr = methods.DriftCorrection(self, self)
-        self.drCorr.start()
+        self.drCorr = methods.dr_corr(self)
+        # self.drCorr.start()
     
     def analyze_fiducials(self):
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
         self.runAnalyzeFiducials = methods.analyze_fiducials(self)
         # self.runAnalyzeFiducials.start()
+    
+    def load_ROIS(self):
+        # try:
+            self.openROIs = QtWidgets.QWidget()
+            self.ROIsFile, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the ROIs file", "","ROI Files (*.roi) ;;All Files (*)")
+
+            methods.load_ROIS(self)
+
+        # except:
+            print("There is no ROIs")
+
 
     def run_remove_single_roi(self):
         try:

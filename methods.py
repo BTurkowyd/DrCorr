@@ -20,6 +20,7 @@ from cv2 import setMouseCallback, waitKey, getWindowProperty
 from numpy import loadtxt, shape, sqrt, zeros
 from scipy import spatial
 from scipy.optimize import curve_fit
+import pickle
 
 from drift import Drift
 from fiducial import Fiducial
@@ -175,6 +176,9 @@ def dr_corr(app):
 
         regions = ROIs(refPt, ix, iy)
 
+        with open('rois.roi', 'wb') as file:
+            pickle.dump(regions, file)
+
         fiducials = [Fiducial(r, app.fidu_intensity) for r in regions.rois]
 
         k = 0
@@ -237,22 +241,48 @@ def dr_corr(app):
         output_folder = os.path.dirname(os.path.realpath(app.locfileName))
 
 
-        for f in fiducials:
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=0.5)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '--', linewidth=0.5)
-        
-        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=1)
-        plt.plot(drift.t, drift.smooth_y, 'k--', label='Y-drift', linewidth=1)
 
-        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=0.5)
-        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k--', linewidth=0.5)
-        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=0.5)
-        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k--', linewidth=0.5)
+        for i, f in enumerate(fiducials):
+            plt.subplot(211)
+            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(i), alpha=0.5)
+            plt.subplot(212)
+            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(i), alpha=0.5)
+        
+        plt.subplot(211)
+        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
+        plt.subplot(212)
+        plt.plot(drift.t, drift.smooth_y, 'k-', label='Y-drift', linewidth=2)
+
+        plt.subplot(211)
+        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
+        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
 
         plt.xlabel('Frame')
-        plt.ylabel('Drift (nm)')
-        # plt.legend()
+        plt.ylabel('X-Drift (nm)')
+        plt.legend()
+
+        plt.subplot(212)
+        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
+        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
+
+        plt.xlabel('Frame')
+        plt.ylabel('Y-Drift (nm)')
+        plt.legend()
         plt.savefig(output_folder + "\\" + "drift_trace.png")
+
+
+        plt.figure()
+        plt.subplot(211)
+        plt.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
+        plt.xlabel('Frame')
+        plt.ylabel('X-SE (nm)')
+
+        plt.subplot(212)
+        plt.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
+        plt.xlabel('Frame')
+        plt.ylabel('Y-SE (nm)')
+        plt.savefig(output_folder + "\\" + "fiducial_st_err.png")
+        
 
         with open(output_folder + "\\" + "drift_trace.txt", "w") as drift_file:
             for dx, dy in zip(drift.smooth_x, drift.smooth_y):
@@ -280,6 +310,9 @@ def analyze_fiducials(app):
 
         regions = ROIs(refPt, ix, iy)
 
+        with open('rois.roi', 'wb') as file:
+            pickle.dump(regions, file)
+
         fiducials = [Fiducial(r, app.fidu_intensity) for r in regions.rois]
 
         k = 0
@@ -297,22 +330,47 @@ def analyze_fiducials(app):
         drift = Drift(fiducials)
 
 
-        for f in fiducials:
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=0.5)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '--', linewidth=0.5)
+        for i, f in enumerate(fiducials):
+            plt.subplot(211)
+            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(i), alpha=0.5)
+            plt.subplot(212)
+            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(i), alpha=0.5)
         
-        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=1)
-        plt.plot(drift.t, drift.smooth_y, 'k--', label='Y-drift', linewidth=1)
+        plt.subplot(211)
+        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
+        plt.subplot(212)
+        plt.plot(drift.t, drift.smooth_y, 'k-', label='Y-drift', linewidth=2)
 
-        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=0.5)
-        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k--', linewidth=0.5)
-        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=0.5)
-        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k--', linewidth=0.5)
+        plt.subplot(211)
+        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
+        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
 
         plt.xlabel('Frame')
-        plt.ylabel('Drift (nm)')
+        plt.ylabel('X-Drift (nm)')
         plt.legend()
+
+        plt.subplot(212)
+        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
+        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
+
+        plt.xlabel('Frame')
+        plt.ylabel('Y-Drift (nm)')
+        plt.legend()
+
+
+        plt.figure()
+        plt.subplot(211)
+        plt.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
+        plt.xlabel('Frame')
+        plt.ylabel('X-SE (nm)')
+
+        plt.subplot(212)
+        plt.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
+        plt.xlabel('Frame')
+        plt.ylabel('Y-SE (nm)')
+
         plt.show()
+
     except:
         print("No beads selected")
 
@@ -378,6 +436,60 @@ def display_image(app):
             app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
             break
 
+def load_ROIS(app):
+    global image, resize, refPt
+
+    with open(app.ROIsFile, 'rb') as file:
+        regions = pickle.load(file)    
+
+    refPt = regions.refPt
+
+    def click_and_crop(event, x, y, flags, param):
+        global refPt
+        if event == EVENT_LBUTTONDOWN:
+            refPt.append((x, y))
+
+        elif event == EVENT_LBUTTONUP:
+            refPt.append((x, y))
+            rectangler(resize, refPt[-2], refPt[-1], (0, 255, 0), 2)
+            imshow("image", resize)
+
+    # load the image, clone it, and setup the mouse callback function
+    image = imread(app.imgFileName)
+    clone = image.copy()
+    namedWindow("image")
+    iy, ix, iz = shape(image)
+    resize = resizer(image, (1260, 1080))
+    setMouseCallback("image", click_and_crop)
+    if len(refPt) > 0:
+        for i in range(0,len(refPt), 2):
+            rectangler(resize, refPt[i], refPt[i+1], (0, 255, 0), 2)
+
+    # keep looping until the 'q' key is pressed
+    while True:
+        # display the image and wait for a keypress
+        imshow("image", resize)
+        key = waitKey(1) & 0xFF
+
+        # if the 'r' key is pressed, reset the cropping region
+        if key == ord("r"):
+            remove_single_roi()
+
+        # if the 'x' key is pressed, reset all ROIs
+        if key == ord("x"):
+            remove_all_rois()
+
+        # if the 'c' key is pressed, break from the loop
+        if key == ord("c"):
+            destroyAllWindows()
+            app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
+            break
+        
+        if getWindowProperty("image",1) < 1:
+            destroyAllWindows()
+            app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
+            break
+
 def remove_single_roi():
     global refPt, resize
     del refPt[-2:]
@@ -390,16 +502,6 @@ def remove_all_rois():
     global refPt, resize
     refPt = list()
     resize = resizer(image, (1260, 1080))
-
-class DriftCorrection(QThread):
-    def __init__(self, parent, app):
-        self.app = app
-        super().__init__()
-    def run(self):
-        dr_corr(self.app)
-        self.exit()
-
-
 class NeNACalculation(QThread):
     def __init__(self, parent, app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
         self.app = app
