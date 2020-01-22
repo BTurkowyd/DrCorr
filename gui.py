@@ -15,6 +15,7 @@ import methods
 import dbscan_widget
 import optics_widget
 import swift_wrapper
+import bead_analyzer
 
 
 class Ui_MainWindow(object):
@@ -73,6 +74,12 @@ class Ui_MainWindow(object):
         self.analyzeFiducials.setObjectName("analyzeFiducials")
         self.analyzeFiducials.clicked.connect(self.analyze_fiducials)
         self.analyzeFiducials.setDisabled(True)
+
+        self.beadAnalyzer = QtWidgets.QPushButton(self.centralwidget)
+        self.beadAnalyzer.setGeometry(QtCore.QRect(230, 270, 200, 40))
+        self.beadAnalyzer.setObjectName("analyzeFiducials")
+        self.beadAnalyzer.clicked.connect(self.analyze_beads)
+        self.beadAnalyzer.setDisabled(True)
 
         self.loadROIs = QtWidgets.QPushButton(self.centralwidget)
         self.loadROIs.setGeometry(QtCore.QRect(230, 370, 200, 40))
@@ -183,6 +190,7 @@ class Ui_MainWindow(object):
         self.loadData.setText(_translate("MainWindow", "Load data"))
         self.delLastROI.setText(_translate("MainWindow", "Delete last ROI"))
         self.delAllROIs.setText(_translate("MainWindow", "Delete all ROIs"))
+        self.beadAnalyzer.setText(_translate("MainWindow", "Bead analyzer"))
         self.analyzeFiducials.setText(_translate("MainWindow", "Analyze fiducials"))
         self.driftCorrection.setText(_translate("MainWindow", "Drift correction"))
         self.loadROIs.setText(_translate("MainWindow", "Load ROIs"))
@@ -219,6 +227,7 @@ class Ui_MainWindow(object):
             self.delLastROI.setDisabled(False)
             self.delAllROIs.setDisabled(False)
             self.analyzeFiducials.setDisabled(False)
+            self.beadAnalyzer.setDisabled(False)
             self.loadROIs.setDisabled(False)
             self.driftCorrection.setDisabled(False)
             self.calculateNeNA.setDisabled(False)
@@ -236,7 +245,13 @@ class Ui_MainWindow(object):
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
         self.drCorr = methods.dr_corr(self)
         # self.drCorr.start()
-    
+
+    def analyze_beads(self):
+        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
+        self.anal_beads = bead_analyzer.Ui_BeadAnalyzer()
+        self.anal_beads.setupUi(self.anal_beads, self)
+        self.anal_beads.show()
+
     def analyze_fiducials(self):
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
         self.runAnalyzeFiducials = methods.analyze_fiducials(self)
@@ -266,7 +281,9 @@ class Ui_MainWindow(object):
             print("There is no ROIs")
     
     def run_display_image(self):
+        self.imageDisplay.setDisabled(True)
         methods.display_image(self)
+        self.imageDisplay.setDisabled(False)
     
     def run_nena(self):
         self.runNena = methods.NeNACalculation(self, self, self.locfileName, self.imgFileName)

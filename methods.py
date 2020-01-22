@@ -407,7 +407,7 @@ def load_particles(app):
         print("Localization file not loaded")
 
 def display_image(app):
-    global image, resize, refPt
+    global image, resize, refPt, iy, ix
 
     numbers = number_gen()
 
