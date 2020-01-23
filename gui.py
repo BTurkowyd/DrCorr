@@ -69,29 +69,29 @@ class Ui_MainWindow(object):
         self.delAllROIs.clicked.connect(self.runremove_all_rois)
         self.delAllROIs.setDisabled(True)
 
-        self.analyzeFiducials = QtWidgets.QPushButton(self.centralwidget)
-        self.analyzeFiducials.setGeometry(QtCore.QRect(230, 320, 200, 40))
-        self.analyzeFiducials.setObjectName("analyzeFiducials")
-        self.analyzeFiducials.clicked.connect(self.analyze_fiducials)
-        self.analyzeFiducials.setDisabled(True)
+        # self.analyzeFiducials = QtWidgets.QPushButton(self.centralwidget)
+        # self.analyzeFiducials.setGeometry(QtCore.QRect(230, 320, 200, 40))
+        # self.analyzeFiducials.setObjectName("analyzeFiducials")
+        # self.analyzeFiducials.clicked.connect(self.analyze_fiducials)
+        # self.analyzeFiducials.setDisabled(True)
 
         self.beadAnalyzer = QtWidgets.QPushButton(self.centralwidget)
-        self.beadAnalyzer.setGeometry(QtCore.QRect(230, 270, 200, 40))
+        self.beadAnalyzer.setGeometry(QtCore.QRect(20, 370, 200, 40))
         self.beadAnalyzer.setObjectName("analyzeFiducials")
         self.beadAnalyzer.clicked.connect(self.analyze_beads)
         self.beadAnalyzer.setDisabled(True)
 
         self.loadROIs = QtWidgets.QPushButton(self.centralwidget)
-        self.loadROIs.setGeometry(QtCore.QRect(230, 370, 200, 40))
+        self.loadROIs.setGeometry(QtCore.QRect(230, 170, 200, 40))
         self.loadROIs.setObjectName("loadROIs")
         self.loadROIs.clicked.connect(self.load_ROIS)
         self.loadROIs.setDisabled(True)
 
-        self.driftCorrection = QtWidgets.QPushButton(self.centralwidget)
-        self.driftCorrection.setGeometry(QtCore.QRect(20, 370, 200, 40))
-        self.driftCorrection.setObjectName("driftCorrection")
-        self.driftCorrection.clicked.connect(self.run_dr_corr)
-        self.driftCorrection.setDisabled(True)
+        # self.driftCorrection = QtWidgets.QPushButton(self.centralwidget)
+        # self.driftCorrection.setGeometry(QtCore.QRect(20, 370, 200, 40))
+        # self.driftCorrection.setObjectName("driftCorrection")
+        # self.driftCorrection.clicked.connect(self.run_dr_corr)
+        # self.driftCorrection.setDisabled(True)
 
         self.checkBox = QtWidgets.QCheckBox(self.centralwidget)
         self.checkBox.setGeometry(QtCore.QRect(30, 450, 400, 40))
@@ -190,9 +190,9 @@ class Ui_MainWindow(object):
         self.loadData.setText(_translate("MainWindow", "Load data"))
         self.delLastROI.setText(_translate("MainWindow", "Delete last ROI"))
         self.delAllROIs.setText(_translate("MainWindow", "Delete all ROIs"))
-        self.beadAnalyzer.setText(_translate("MainWindow", "Bead analyzer"))
-        self.analyzeFiducials.setText(_translate("MainWindow", "Analyze fiducials"))
-        self.driftCorrection.setText(_translate("MainWindow", "Drift correction"))
+        self.beadAnalyzer.setText(_translate("MainWindow", "Bead analyzer + Dr. corr."))
+        # self.analyzeFiducials.setText(_translate("MainWindow", "Analyze fiducials"))
+        # self.driftCorrection.setText(_translate("MainWindow", "Drift correction"))
         self.loadROIs.setText(_translate("MainWindow", "Load ROIs"))
         self.checkBox.setText(_translate("MainWindow", "No corr. terms in NeNA"))
         self.calculateNeNA.setText(_translate("MainWindow", "Calculate NeNA"))
@@ -226,10 +226,10 @@ class Ui_MainWindow(object):
             self.imageDisplay.setDisabled(False)
             self.delLastROI.setDisabled(False)
             self.delAllROIs.setDisabled(False)
-            self.analyzeFiducials.setDisabled(False)
+            # self.analyzeFiducials.setDisabled(False)
             self.beadAnalyzer.setDisabled(False)
             self.loadROIs.setDisabled(False)
-            self.driftCorrection.setDisabled(False)
+            # self.driftCorrection.setDisabled(False)
             self.calculateNeNA.setDisabled(False)
             self.calculateTemporalNeNA.setDisabled(False)
             self.calculateDBSCAN.setDisabled(False)
@@ -254,17 +254,17 @@ class Ui_MainWindow(object):
 
     def analyze_fiducials(self):
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-        self.runAnalyzeFiducials = methods.analyze_fiducials(self)
-        # self.runAnalyzeFiducials.start()
+        methods.analyze_fiducials(self)
+
     
     def load_ROIS(self):
-        # try:
+        try:
             self.openROIs = QtWidgets.QWidget()
             self.ROIsFile, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the ROIs file", "","ROI Files (*.roi) ;;All Files (*)")
 
             methods.load_ROIS(self)
 
-        # except:
+        except:
             print("There is no ROIs")
 
 

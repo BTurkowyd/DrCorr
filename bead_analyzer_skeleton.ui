@@ -95,6 +95,19 @@
      <string>Select All</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="applyDriftCorr">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>520</y>
+      <width>96</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Apply dr. corr.</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QMenuBar" name="menubar">

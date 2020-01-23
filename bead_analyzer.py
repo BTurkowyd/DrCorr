@@ -17,19 +17,31 @@ class Ui_BeadAnalyzer(QtWidgets.QMainWindow):
         try:
             self.regions = ROIs(methods.refPt, methods.ix, methods.iy)
             self.fiducials = [Fiducial(r, app.fidu_intensity) for r in self.regions.rois]
+            
         except AttributeError:
             print('No ROIs selected')
+
+        self.mother_app = app
 
         BeadAnalyzer.setObjectName("Bead Analyzer")
         BeadAnalyzer.resize(400, 600)
         self.centralwidget = QtWidgets.QWidget(BeadAnalyzer)
         self.centralwidget.setObjectName("beadAnalyzerWidget")
+
         self.analayzeBeads = QtWidgets.QPushButton(self.centralwidget)
         self.analayzeBeads.setGeometry(QtCore.QRect(10, 520, 96, 32))
         self.analayzeBeads.setObjectName("analayzeBeads")
+        self.analayzeBeads.clicked.connect(self.analyze_fiducials)
+
+        self.applyDriftCorr = QtWidgets.QPushButton(self.centralwidget)
+        self.applyDriftCorr.setGeometry(QtCore.QRect(120, 520, 96, 32))
+        self.applyDriftCorr.setObjectName("applyDriftCorr")
+        self.applyDriftCorr.clicked.connect(self.apply_drift_corr)
+
         self.quiteBeadsAnal = QtWidgets.QPushButton(self.centralwidget)
         self.quiteBeadsAnal.setGeometry(QtCore.QRect(290, 520, 96, 32))
         self.quiteBeadsAnal.setObjectName("quiteBeadsAnal")
+        self.quiteBeadsAnal.clicked.connect(self.close)
         
         self.listOfFiducials = QtWidgets.QFrame(self.centralwidget)
         self.listOfFiducials.setGeometry(QtCore.QRect(10, 10, 381, 441))
@@ -80,14 +92,13 @@ class Ui_BeadAnalyzer(QtWidgets.QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         BeadAnalyzer.setWindowTitle(_translate("BeadAnalyzer", "BeadAnalyzer"))
         self.analayzeBeads.setText(_translate("BeadAnalyzer", "Analyze"))
-        self.quiteBeadsAnal.setText(_translate("BeadAnalyzer", "Quit"))
+        self.quiteBeadsAnal.setText(_translate("BeadAnalyzer", "Close"))
 
         for i, f in enumerate(self.fiducialCheckBoxes):
             f.setText(_translate("BeadAnalyzer", "Fiducial " + str(i+1)))
 
-        # self.Fiducial1.setText(_translate("BeadAnalyzer", "Fiducial 1"))
-        # self.Fiducial2.setText(_translate("BeadAnalyzer", "Fiducial 2"))
         self.selectAll.setText(_translate("BeadAnalyzer", "Select All"))
+        self.applyDriftCorr.setText(_translate("MainWindow", "Apply dr. corr."))
 
     
     def select_all(self):
@@ -99,8 +110,30 @@ class Ui_BeadAnalyzer(QtWidgets.QMainWindow):
             for f in self.fiducialCheckBoxes:
                 f.setChecked(True)
             self.on = True
+    
+    def apply_drift_corr(self):
+        self.selected_fiducials = []
+        self.ids = []
 
-    # def unselect_all(self):
-    #     for f in self.fiducialCheckBoxes:
-    #         f.setChecked(False)
-    #     self.selectAll.clicked.connect(self.select_all)
+        n = 1
+        for f,ff in zip(self.fiducials, self.fiducialCheckBoxes):
+                if ff.isChecked():
+                    self.selected_fiducials.append(f)
+                    self.ids.append(n)
+                n += 1
+
+        methods.dr_corr_2(self.mother_app, self.selected_fiducials, self.ids, self.regions)
+    
+    def analyze_fiducials(self):
+        self.selected_fiducials = []
+        self.ids = []
+
+        n = 1
+        for f,ff in zip(self.fiducials, self.fiducialCheckBoxes):
+                if ff.isChecked():
+                    self.selected_fiducials.append(f)
+                    self.ids.append(n)
+                n += 1
+
+        methods.analyze_fiducials_2(self.mother_app, self.selected_fiducials, self.ids, self.regions)
+

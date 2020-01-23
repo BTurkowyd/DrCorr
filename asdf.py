@@ -35,6 +35,9 @@ class Ui_MainWindow(object):
         self.selectAll = QtWidgets.QPushButton(self.centralwidget)
         self.selectAll.setGeometry(QtCore.QRect(10, 460, 96, 32))
         self.selectAll.setObjectName("selectAll")
+        self.applyDriftCorr = QtWidgets.QPushButton(self.centralwidget)
+        self.applyDriftCorr.setGeometry(QtCore.QRect(120, 520, 96, 32))
+        self.applyDriftCorr.setObjectName("applyDriftCorr")
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -54,4 +57,5 @@ class Ui_MainWindow(object):
         self.quiteBeadsAnal.setText(_translate("MainWindow", "Quit"))
         self.checkBox.setText(_translate("MainWindow", "CheckBox"))
         self.selectAll.setText(_translate("MainWindow", "Select All"))
+        self.applyDriftCorr.setText(_translate("MainWindow", "Apply dr. corr."))
 
