@@ -599,6 +599,25 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids, regions):
         plt.ylabel('Y-SE (nm)')
         plt.grid(True)
 
+        plt.figure()
+        for i, f in enumerate(fiducials):
+            plt.subplot(211)
+            plt.plot(f.stretch[:,2], f.stretch[:,0]-drift.smooth_x, '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            plt.subplot(212)
+            plt.plot(f.stretch[:,2], f.stretch[:,1]-drift.smooth_y, '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+
+        plt.subplot(211)
+        plt.xlabel("Frame")
+        plt.ylabel("dX (nm)")
+        plt.grid(True)
+        plt.legend()
+
+        plt.subplot(212)
+        plt.xlabel("Frame")
+        plt.ylabel("dY (nm)")
+        plt.grid(True)
+        plt.legend()
+
         plt.show()
 
     # except:
