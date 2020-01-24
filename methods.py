@@ -115,7 +115,7 @@ def calc_NeNA(locs, localization, k, counting=0, nenaList=[]):
     outname = 'NeNA_loc_{0}_{1}.txt'.format(k + 1, counting)
     np.savetxt(str(output_folder) + "\\" + outname, NeNA_dist, fmt='%.5e', delimiter='   ', header=hd, comments='# ')
     nenaList.append(float(NeNA_acc[0]))
-    return nenaList
+    return float(NeNA_acc[0])
 
 def neNa(app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
     try:
@@ -142,9 +142,10 @@ def neNa(app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, 
         app.progressBar.setMaximum(len(nena_regions))
         app.progressBar.setValue(k)
 
+        nena_values = []
         for i in range(len(nena_regions)):
             if (windowJump or windowSize) == 0:
-                nena_value = calc_NeNA(nena_regions[i].nena, localization, i)
+                nena_values.append(calc_NeNA(nena_regions[i].nena, localization, i))
 
             else:
                 counting = 0
@@ -160,7 +161,7 @@ def neNa(app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, 
             k += 1
             app.progressBar.setValue(k)
         
-        np.savetxt(str(output_folder) + "\\NeNA_summary_table.txt", nena_value, fmt='%.2f')
+        np.savetxt(str(output_folder) + "\\NeNA_summary_table.txt", nena_values, fmt='%.2f')
 
         app.statusBar.setText("NeNA calculated!")
     except:
