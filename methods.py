@@ -320,7 +320,7 @@ def dr_corr_2(app, fiducials, fiducial_ids, regions):
         else:
             loc = pd.read_csv(app.locfileName)
 
-        with open(app.locfileName.split('.')[0] +'\\rois.roi', 'wb') as file:
+        with open(app.locfileName.split('.')[0] +'rois.roi', 'wb') as file:
             pickle.dump(regions, file)
 
         k = 0
@@ -538,7 +538,7 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids, regions):
         else:
             loc = pd.read_csv(app.locfileName)
 
-        with open(app.locfileName.split('.')[0] + '\\rois.roi', 'wb') as file:
+        with open(app.locfileName.split('.')[0] + 'rois.roi', 'wb') as file:
             pickle.dump(regions, file)
 
         k = 0
