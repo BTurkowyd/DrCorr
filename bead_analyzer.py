@@ -13,10 +13,11 @@ from fiducial import Fiducial
 
 
 class Ui_BeadAnalyzer(QtWidgets.QMainWindow):
-    def setupUi(self, BeadAnalyzer, app):
+    def setupUi(self, BeadAnalyzer, app, fiducials):
         try:
-            self.regions = ROIs(methods.refPt, methods.ix, methods.iy)
-            self.fiducials = [Fiducial(r, app.fidu_intensity) for r in self.regions.rois]
+            # self.regions = ROIs(methods.refPt, methods.ix, methods.iy)
+            # self.fiducials = [Fiducial(r, app.fidu_intensity) for r in self.regions.rois]
+            self.fiducials = fiducials
             
         except AttributeError:
             print('No ROIs selected')
@@ -122,7 +123,7 @@ class Ui_BeadAnalyzer(QtWidgets.QMainWindow):
                     self.ids.append(n)
                 n += 1
 
-        methods.dr_corr_2(self.mother_app, self.selected_fiducials, self.ids, self.regions)
+        methods.dr_corr_2(self.mother_app, self.selected_fiducials, self.ids)
     
     def analyze_fiducials(self):
         self.selected_fiducials = []
@@ -135,5 +136,5 @@ class Ui_BeadAnalyzer(QtWidgets.QMainWindow):
                     self.ids.append(n)
                 n += 1
 
-        methods.analyze_fiducials_2(self.mother_app, self.selected_fiducials, self.ids, self.regions)
+        methods.analyze_fiducials_2(self.mother_app, self.selected_fiducials, self.ids)
 

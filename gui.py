@@ -218,9 +218,9 @@ class Ui_MainWindow(object):
         else:
             self.openFile = QtWidgets.QWidget()
             self.locfileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the localization file", "","CSV Files (*.csv) ;;All Files (*)")
-        self.imgFileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the image reconstruction", "","PNG Files (*.PNG) ;; All Files (*)")
+        # self.imgFileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the image reconstruction", "","PNG Files (*.PNG) ;; All Files (*)")
 
-        if self.locfileName and self.imgFileName:
+        if self.locfileName:
             print(self.locfileName)
             methods.refPt = []
             methods.load_particles(self)
@@ -250,7 +250,7 @@ class Ui_MainWindow(object):
     def analyze_beads(self):
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
         self.anal_beads = bead_analyzer.Ui_BeadAnalyzer()
-        self.anal_beads.setupUi(self.anal_beads, self)
+        self.anal_beads.setupUi(self.anal_beads, self, self.image_recon.fiducials)
         self.anal_beads.show()
 
     def analyze_fiducials(self):
@@ -284,7 +284,7 @@ class Ui_MainWindow(object):
     def run_display_image(self):
         self.imageDisplay.setDisabled(True)
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-        image_recon = ImageReconstruction(self.locfileName, self.fidu_intensity)
+        self.image_recon = ImageReconstruction(self.locfileName, self.fidu_intensity)
         self.imageDisplay.setDisabled(False)
     
     def run_nena(self):

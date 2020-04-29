@@ -307,21 +307,23 @@ def dr_corr(app):
     except:
         print("No ROIs selected")
 
-def dr_corr_2(app, fiducials, fiducial_ids, regions):
-    try:
-        global image, resize, refPt
+def dr_corr_2(app, fiducials, fiducial_ids):
 
-        imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
+        plt.style.use('classic')
+    # try:
+        # global image, resize, refPt
 
-        iy, ix, iz = shape(image)
+        # imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
 
-        if app.inputFormat.currentText() == "RapidSTORM":
-            loc = loadtxt(app.locfileName)
-        else:
-            loc = pd.read_csv(app.locfileName)
+        # iy, ix, iz = shape(image)
 
-        with open(app.locfileName.split('.')[0] +'\\rois.roi', 'wb') as file:
-            pickle.dump(regions, file)
+        # if app.inputFormat.currentText() == "RapidSTORM":
+        loc = loadtxt(app.locfileName)
+        # else:
+        #     loc = pd.read_csv(app.locfileName)
+
+        # with open(app.locfileName.split('.')[0] +'\\rois.roi', 'wb') as file:
+        #     pickle.dump(regions, file)
 
         k = 0
         app.progressBar.setMaximum(len(fiducials))
@@ -329,8 +331,7 @@ def dr_corr_2(app, fiducials, fiducial_ids, regions):
         app.statusBar.setText("Extracting fiducial markers")
 
         for f in fiducials:
-            f.extract_fiducial(loc, app.inputFormat.currentText())
-            f.rel_drift(app.inputFormat.currentText())
+            f.rel_drift()
             f.stretch_fiducials(loc, app.inputFormat.currentText())
             k += 1
             app.progressBar.setValue(k)
@@ -383,7 +384,7 @@ def dr_corr_2(app, fiducials, fiducial_ids, regions):
         output_folder = os.path.dirname(os.path.realpath(app.locfileName))
 
 
-
+        plt.figure()
         for i, f in enumerate(fiducials):
             plt.subplot(211)
             plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
@@ -436,8 +437,8 @@ def dr_corr_2(app, fiducials, fiducial_ids, regions):
         
         app.statusBar.setText("Done!")
         print('DONE!!!')
-    except:
-        print("No ROIs selected")    
+    # except:
+    #     print("No ROIs selected")    
 
 def analyze_fiducials(app):
 
@@ -526,20 +527,22 @@ def analyze_fiducials(app):
     except:
         print("No beads selected")
 
-def analyze_fiducials_2(app, fiducials, fiducial_ids, regions):
+def analyze_fiducials_2(app, fiducials, fiducial_ids):
+
+        plt.style.use('classic')
 
     # try:
-        global image, resize, refPt
+        # global image, resize, refPt
 
-        imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
+        # imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
 
-        if app.inputFormat.currentText() == "RapidSTORM":
-            loc = loadtxt(app.locfileName)
-        else:
-            loc = pd.read_csv(app.locfileName)
+        # if app.inputFormat.currentText() == "RapidSTORM":
+        loc = loadtxt(app.locfileName)
+        # else:
+        #     loc = pd.read_csv(app.locfileName)
 
-        with open(app.locfileName.split('.')[0] + '\\rois.roi', 'wb') as file:
-            pickle.dump(regions, file)
+        # with open(app.locfileName.split('.')[0] + '\\rois.roi', 'wb') as file:
+        #     pickle.dump(regions, file)
 
         k = 0
         app.progressBar.setMaximum(len(fiducials))
@@ -547,15 +550,14 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids, regions):
         app.statusBar.setText("Extracting fiducial markers")
 
         for f in fiducials:
-            f.extract_fiducial(loc, app.inputFormat.currentText())
-            f.rel_drift(app.inputFormat.currentText())
+            f.rel_drift()
             f.stretch_fiducials(loc, app.inputFormat.currentText())
             k += 1
             app.progressBar.setValue(k)
 
         drift = Drift(fiducials)
 
-
+        plt.figure()
         for i, f in enumerate(fiducials):
             plt.subplot(211)
             plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
