@@ -16,6 +16,7 @@ import dbscan_widget
 import optics_widget
 import swift_wrapper
 import bead_analyzer
+from image_reconstruction import ImageReconstruction
 
 
 class Ui_MainWindow(object):
@@ -282,7 +283,8 @@ class Ui_MainWindow(object):
     
     def run_display_image(self):
         self.imageDisplay.setDisabled(True)
-        methods.display_image(self)
+        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
+        image_recon = ImageReconstruction(self.locfileName, self.fidu_intensity)
         self.imageDisplay.setDisabled(False)
     
     def run_nena(self):
