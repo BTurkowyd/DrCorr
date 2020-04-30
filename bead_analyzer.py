@@ -9,14 +9,11 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import methods
 from rois import ROIs
-from fiducial import Fiducial
 
 
 class Ui_BeadAnalyzer(QtWidgets.QMainWindow):
     def setupUi(self, BeadAnalyzer, app, fiducials):
         try:
-            # self.regions = ROIs(methods.refPt, methods.ix, methods.iy)
-            # self.fiducials = [Fiducial(r, app.fidu_intensity) for r in self.regions.rois]
             self.fiducials = fiducials
             
         except AttributeError:

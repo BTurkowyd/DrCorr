@@ -23,7 +23,6 @@ from scipy.optimize import curve_fit
 import pickle
 
 from drift import Drift
-from fiducial import Fiducial
 from kalman_filter import KalmanFilterXY
 from nena import NeNA
 from particle import Particle
@@ -167,146 +166,6 @@ def neNa(app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, 
     except:
         print("No ROIs selected")
 
-def dr_corr(app):
-
-    regions = None
-    plt.close()
-
-    try:
-        global image, resize, refPt
-
-        imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
-
-        iy, ix, iz = shape(image)
-
-        if app.inputFormat.currentText() == "RapidSTORM":
-            loc = loadtxt(app.locfileName)
-        else:
-            loc = pd.read_csv(app.locfileName)
-
-        regions = ROIs(refPt, ix, iy)
-
-        with open('rois.roi', 'wb') as file:
-            pickle.dump(regions, file)
-
-        fiducials = [Fiducial(r, app.fidu_intensity) for r in regions.rois]
-
-        k = 0
-        app.progressBar.setMaximum(len(fiducials))
-        app.progressBar.setValue(k)
-        app.statusBar.setText("Extracting fiducial markers")
-
-        for f in fiducials:
-            f.extract_fiducial(loc, app.inputFormat.currentText())
-            f.rel_drift(app.inputFormat.currentText())
-            f.stretch_fiducials(loc, app.inputFormat.currentText())
-            k += 1
-            app.progressBar.setValue(k)
-
-        drift = Drift(fiducials)
-
-        k = 0
-        app.progressBar.setMaximum(len(loc))
-        app.progressBar.setValue(k)
-        app.statusBar.setText("Applying the drift correction")
-
-        for p in particles:
-            p.load_drift(drift)
-            p.apply_drift()
-            k += 1
-            if k % 1000 == 0:
-                app.progressBar.setValue(k)
-        app.progressBar.setValue(k)    
-
-        with open(app.locfileName) as input_file:
-            head = list(islice(input_file, 1))
-
-        if app.inputFormat.currentText() == "RapidSTORM":
-            with open(app.locfileName.split('.')[0] + "_corrected.txt", "w") as final_file:
-                final_file.write(str(head[0]))
-                k = 0
-                app.progressBar.setValue(k)
-                app.progressBar.setMaximum(len(loc))
-                app.statusBar.setText("Saving a new localization file")
-                for p in particles:
-                    final_file.write('%1.1f %1.1f %1.0f %1.0f\n' % (p.new_x, p.new_y, p.t, p.I))
-                    k += 1
-                    if k % 1000 == 0:
-                        app.progressBar.setValue(k)
-                app.progressBar.setValue(k)
-        else:
-            with open(app.locfileName.split('.')[0] + "_corrected.csv", "w") as final_file:
-                final_file.write('"id","frame","x [nm]","y [nm]","sigma [nm]","intensity [photon]","offset [photon]","bkgstd [photon]","chi2","uncertainty_xy [nm]"\n')
-                k = 0
-                app.progressBar.setValue(k)
-                app.progressBar.setMaximum(len(loc))
-                app.statusBar.setText("Saving a new localization file")
-                for p in particles:
-                    final_file.write("%1.0f,%1.0f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f\n" % (p.id, p.t, p.new_x, p.new_y, p.sigma, p.I, p.offset, p.bkgstd, p.chi2, p.uncertainty))
-                    k += 1
-                    if k % 1000 == 0:
-                        app.progressBar.setValue(k)
-                app.progressBar.setValue(k)
-
-        output_folder = os.path.dirname(os.path.realpath(app.locfileName))
-
-
-
-        for i, f in enumerate(fiducials):
-            plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
-            plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
-        
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y, 'k-', label='Y-drift', linewidth=2)
-
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
-        plt.grid(True)
-
-        plt.xlabel('Frame')
-        plt.ylabel('X-Drift (nm)')
-        plt.legend()
-
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
-        plt.grid(True)
-
-        plt.xlabel('Frame')
-        plt.ylabel('Y-Drift (nm)')
-        plt.legend()
-        plt.savefig(output_folder + "\\" + "drift_trace.png")
-
-
-        plt.figure()
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('X-SE (nm)')
-        plt.grid(True)
-
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('Y-SE (nm)')
-        plt.grid(True)
-        plt.savefig(output_folder + "\\" + "fiducial_st_err.png")
-        
-
-        with open(output_folder + "\\" + "drift_trace.txt", "w") as drift_file:
-            for dx, dy in zip(drift.smooth_x, drift.smooth_y):
-                drift_file.write('%1.3f\t%1.3f\n' % (dx, dy))
-        
-        app.statusBar.setText("Done!")
-        print('DONE!!!')
-    except:
-        print("No ROIs selected")
-
 def dr_corr_2(app, fiducials, fiducial_ids):
 
         plt.style.use('classic')
@@ -317,10 +176,10 @@ def dr_corr_2(app, fiducials, fiducial_ids):
 
         # iy, ix, iz = shape(image)
 
-        # if app.inputFormat.currentText() == "RapidSTORM":
-        loc = loadtxt(app.locfileName)
-        # else:
-        #     loc = pd.read_csv(app.locfileName)
+        if app.inputFormat.currentText() == "RapidSTORM":
+            loc = loadtxt(app.locfileName)
+        else:
+            loc = pd.read_csv(app.locfileName)
 
         # with open(app.locfileName.split('.')[0] +'\\rois.roi', 'wb') as file:
         #     pickle.dump(regions, file)
@@ -437,95 +296,10 @@ def dr_corr_2(app, fiducials, fiducial_ids):
         
         app.statusBar.setText("Done!")
         print('DONE!!!')
+
+        plt.close("all")
     # except:
     #     print("No ROIs selected")    
-
-def analyze_fiducials(app):
-
-    regions = None
-    plt.clf()
-
-    try:
-        global image, resize, refPt
-
-        imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
-
-        iy, ix, iz = shape(image)
-
-        if app.inputFormat.currentText() == "RapidSTORM":
-            loc = loadtxt(app.locfileName)
-        else:
-            loc = pd.read_csv(app.locfileName)
-
-        regions = ROIs(refPt, ix, iy)
-
-        with open('rois.roi', 'wb') as file:
-            pickle.dump(regions, file)
-
-        fiducials = [Fiducial(r, app.fidu_intensity) for r in regions.rois]
-
-        k = 0
-        app.progressBar.setMaximum(len(fiducials))
-        app.progressBar.setValue(k)
-        app.statusBar.setText("Extracting fiducial markers")
-
-        for f in fiducials:
-            f.extract_fiducial(loc, app.inputFormat.currentText())
-            f.rel_drift(app.inputFormat.currentText())
-            f.stretch_fiducials(loc, app.inputFormat.currentText())
-            k += 1
-            app.progressBar.setValue(k)
-
-        drift = Drift(fiducials)
-
-
-        for i, f in enumerate(fiducials):
-            plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
-            plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
-        
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y, 'k-', label='Y-drift', linewidth=2)
-
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
-        plt.grid(True)
-
-        plt.xlabel('Frame')
-        plt.ylabel('X-Drift (nm)')
-        plt.legend()
-
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
-        plt.grid(True)
-
-        plt.xlabel('Frame')
-        plt.ylabel('Y-Drift (nm)')
-        plt.legend()
-
-
-        plt.figure()
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('X-SE (nm)')
-        plt.grid(True)
-
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('Y-SE (nm)')
-        plt.grid(True)
-
-        plt.show()
-
-    except:
-        print("No beads selected")
 
 def analyze_fiducials_2(app, fiducials, fiducial_ids):
 
@@ -536,10 +310,10 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids):
 
         # imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
 
-        # if app.inputFormat.currentText() == "RapidSTORM":
-        loc = loadtxt(app.locfileName)
-        # else:
-        #     loc = pd.read_csv(app.locfileName)
+        if app.inputFormat.currentText() == "RapidSTORM":
+            loc = loadtxt(app.locfileName)
+        else:
+            loc = pd.read_csv(app.locfileName)
 
         # with open(app.locfileName.split('.')[0] + '\\rois.roi', 'wb') as file:
         #     pickle.dump(regions, file)
@@ -764,6 +538,7 @@ def remove_all_rois():
     global refPt, resize
     refPt = list()
     resize = resizer(image, (1260, 1080))
+
 class NeNACalculation(QThread):
     def __init__(self, parent, app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
         self.app = app

@@ -16,7 +16,7 @@ import dbscan_widget
 import optics_widget
 import swift_wrapper
 import bead_analyzer
-from image_reconstruction import ImageReconstruction
+from image_reconstruction_dr_correction import ImageReconstructionDrCorrection
 
 
 class Ui_MainWindow(object):
@@ -70,12 +70,6 @@ class Ui_MainWindow(object):
         self.delAllROIs.clicked.connect(self.runremove_all_rois)
         self.delAllROIs.setDisabled(True)
 
-        # self.analyzeFiducials = QtWidgets.QPushButton(self.centralwidget)
-        # self.analyzeFiducials.setGeometry(QtCore.QRect(230, 320, 200, 40))
-        # self.analyzeFiducials.setObjectName("analyzeFiducials")
-        # self.analyzeFiducials.clicked.connect(self.analyze_fiducials)
-        # self.analyzeFiducials.setDisabled(True)
-
         self.beadAnalyzer = QtWidgets.QPushButton(self.centralwidget)
         self.beadAnalyzer.setGeometry(QtCore.QRect(20, 370, 200, 40))
         self.beadAnalyzer.setObjectName("analyzeFiducials")
@@ -87,12 +81,6 @@ class Ui_MainWindow(object):
         self.loadROIs.setObjectName("loadROIs")
         self.loadROIs.clicked.connect(self.load_ROIS)
         self.loadROIs.setDisabled(True)
-
-        # self.driftCorrection = QtWidgets.QPushButton(self.centralwidget)
-        # self.driftCorrection.setGeometry(QtCore.QRect(20, 370, 200, 40))
-        # self.driftCorrection.setObjectName("driftCorrection")
-        # self.driftCorrection.clicked.connect(self.run_dr_corr)
-        # self.driftCorrection.setDisabled(True)
 
         self.checkBox = QtWidgets.QCheckBox(self.centralwidget)
         self.checkBox.setGeometry(QtCore.QRect(30, 450, 400, 40))
@@ -177,6 +165,8 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+        self.image_recon = None
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "DrCorr 3.0"))
@@ -192,8 +182,6 @@ class Ui_MainWindow(object):
         self.delLastROI.setText(_translate("MainWindow", "Delete last ROI"))
         self.delAllROIs.setText(_translate("MainWindow", "Delete all ROIs"))
         self.beadAnalyzer.setText(_translate("MainWindow", "Bead analyzer + Dr. corr."))
-        # self.analyzeFiducials.setText(_translate("MainWindow", "Analyze fiducials"))
-        # self.driftCorrection.setText(_translate("MainWindow", "Drift correction"))
         self.loadROIs.setText(_translate("MainWindow", "Load ROIs"))
         self.checkBox.setText(_translate("MainWindow", "No corr. terms in NeNA"))
         self.calculateNeNA.setText(_translate("MainWindow", "Calculate NeNA"))
@@ -242,22 +230,12 @@ class Ui_MainWindow(object):
     def close_program(self):
         sys.exit(self)
 
-    def run_dr_corr(self):
-        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-        self.drCorr = methods.dr_corr(self)
-        # self.drCorr.start()
-
     def analyze_beads(self):
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
         self.anal_beads = bead_analyzer.Ui_BeadAnalyzer()
-        self.anal_beads.setupUi(self.anal_beads, self, self.image_recon.fiducials)
+        self.anal_beads.setupUi(self.anal_beads, self, self.image_recon.selections)
         self.anal_beads.show()
 
-    def analyze_fiducials(self):
-        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-        methods.analyze_fiducials(self)
-
-    
     def load_ROIS(self):
         try:
             self.openROIs = QtWidgets.QWidget()
@@ -268,23 +246,22 @@ class Ui_MainWindow(object):
         except:
             print("There is no ROIs")
 
-
     def run_remove_single_roi(self):
         try:
-            methods.remove_single_roi()
+            self.image_recon.del_last_selection()
         except:
-            print("There is no ROIs")
+            print("There are no ROIs")
 
     def runremove_all_rois(self):
         try:
-            methods.remove_all_rois()
+            self.image_recon.del_all_selections()
         except:
-            print("There is no ROIs")
+            print("There are no ROIs")
     
     def run_display_image(self):
         self.imageDisplay.setDisabled(True)
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-        self.image_recon = ImageReconstruction(self.locfileName, self.fidu_intensity)
+        self.image_recon = ImageReconstructionDrCorrection(self.locfileName, self.fidu_intensity, self.inputFormat.currentText())
         self.imageDisplay.setDisabled(False)
     
     def run_nena(self):
