@@ -17,6 +17,7 @@ import optics_widget
 import swift_wrapper
 import bead_analyzer
 from image_reconstruction_dr_correction import ImageReconstructionDrCorrection
+from image_reconstruction2 import ImageReconstruction
 
 
 class Ui_MainWindow(object):
@@ -231,8 +232,10 @@ class Ui_MainWindow(object):
         sys.exit(self)
 
     def analyze_beads(self):
+        print(self.fidu_intensity)
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
         self.anal_beads = bead_analyzer.Ui_BeadAnalyzer()
+        self.image_recon.create_fiducials(self.fidu_intensity)
         self.anal_beads.setupUi(self.anal_beads, self, self.image_recon.selections)
         self.anal_beads.show()
 
@@ -265,7 +268,8 @@ class Ui_MainWindow(object):
         self.imageDisplay.setDisabled(False)
     
     def run_nena(self):
-        self.runNena = methods.NeNACalculation(self, self, self.locfileName, self.imgFileName)
+        self.image_recon.create_fiducials(0)
+        self.runNena = methods.NeNACalculation(self, self, self.image_recon, self.locfileName)
         self.runNena.start()
         # methods.neNa(self, self.locfileName, self.imgFileName)
     

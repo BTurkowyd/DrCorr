@@ -83,27 +83,30 @@ def CFit_resultsCorr(r, y):
     popt, pcov = curve_fit(CFunc2dCorr, r, y, p0)
     return popt, pcov
 
-def calc_NeNA(locs, localization, k, counting=0, nenaList=[]):
-    max_frame = np.max(locs[:, 2])
-    length = shape(locs)[0]
+def calc_NeNA(selections, localization, k, counting=0, nenaList=[]):
+    selections = np.asarray(selections.fiducial)
+    print(selections)
+    max_frame = np.max(selections[:,2])
+    print(max_frame)
+    length = shape(selections)[0]
     frames = zeros([length, 2])
-    frames[:, 1] = locs[:, 2]
+    frames[:, 1] = selections[:, 2]
     tree = spatial.KDTree(frames[:, 0:2])
     d = zeros([length, 1])
     p = -1
     for i in range(length - 1):
-        o = locs[i, 2]
+        o = selections[i, 2]
         # j muss angeben,ob nächster Frame existent ist
-        j = locs[i + 1, 2] - locs[i, 2]
-        if locs[i, 2] < max_frame and o == p:
-            d[i] = min_dist(locs[i, 0:3], temp_locs)
+        j = selections[i + 1, 2] - selections[i, 2]
+        if selections[i, 2] < max_frame and o == p:
+            d[i] = min_dist(selections[i, 0:3], temp_locs)
             p = o
-        elif locs[i, 2] < max_frame and o > p:
-            temp_locs = locs[tree.query_ball_point([0, o + 1], 0.1), 0:2]
+        elif selections[i, 2] < max_frame and o > p:
+            temp_locs = selections[tree.query_ball_point([0, o + 1], 0.1), 0:2]
             if np.shape(temp_locs)[0] > 0:
-                d[i] = min_dist(locs[i, 0:3], temp_locs)
+                d[i] = min_dist(selections[i, 0:3], temp_locs)
                 p = o
-        elif locs[i, 2] == max_frame:
+        elif selections[i, 2] == max_frame:
             break
     print('\n')
     idx = d > 0
@@ -116,42 +119,43 @@ def calc_NeNA(locs, localization, k, counting=0, nenaList=[]):
     nenaList.append(float(NeNA_acc[0]))
     return float(NeNA_acc[0])
 
-def neNa(app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
+
+def neNa(app, image_recon, localization, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
     try:
-        global image, resize, refPt
+        # global image, resize, refPt
 
-        iy, ix, iz = shape(image)
+        # iy, ix, iz = shape(image)
 
-        if app.inputFormat.currentText() == "RapidSTORM":
-            loc = loadtxt(localization)
-        else:
-            loc = pd.read_csv(app.locfileName)
+        # if app.inputFormat.currentText() == "RapidSTORM":
+        #     loc = loadtxt(image_recon)
+        # else:
+        #     loc = pd.read_csv(app.locfileName)
 
         output_folder = os.path.dirname(os.path.realpath(localization))
 
-        regions = ROIs(refPt, ix, iy)
-        nena_regions = [NeNA(r, firstFrame, lastFrame, windowJump, windowSize, app.inputFormat.currentText()) for r in regions.rois]
+        # regions = ROIs(refPt, ix, iy)
+        # nena_regions = [NeNA(r, firstFrame, lastFrame, windowJump, windowSize, app.inputFormat.currentText()) for r in regions.rois]
 
-        app.statusBar.setText("Calculating NeNA values")
+        # app.statusBar.setText("Calculating NeNA values")
 
-        for n in nena_regions:
-            n.nena_roi(loc, firstFrame, lastFrame, windowJump, windowSize)
+        # for n in nena_regions:
+        #     n.nena_roi(loc, firstFrame, lastFrame, windowJump, windowSize)
 
         k = 0
-        app.progressBar.setMaximum(len(nena_regions))
+        app.progressBar.setMaximum(len(image_recon.selections))
         app.progressBar.setValue(k)
 
         nena_values = []
-        for i in range(len(nena_regions)):
+        for i in range(len(image_recon.selections)):
             if (windowJump or windowSize) == 0:
-                nena_values.append(calc_NeNA(nena_regions[i].nena, localization, i))
+                nena_values.append(calc_NeNA(image_recon.selections[i], localization, i))
 
             else:
                 counting = 0
                 nenaList = []
                 nenaSeries = []
-                for j in range(len(nena_regions[i].nena)):
-                    calc_NeNA(nena_regions[i].nena[j], localization, i, counting, nenaList)
+                for j in range(len(image_recon.selections)):
+                    calc_NeNA(image_recon.selections, image_recon, i, counting, nenaList)
                     counting += 1
                 np.savetxt(str(output_folder) + "\\NeNA_summary_" + str(i) + ".txt", nenaList, fmt='%.5e')
                 nenaSeries.append(nenaList)
@@ -540,14 +544,14 @@ def remove_all_rois():
     resize = resizer(image, (1260, 1080))
 
 class NeNACalculation(QThread):
-    def __init__(self, parent, app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
+    def __init__(self, parent, app, image_recon, localization,  firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
         self.app = app
+        self.image_recon = image_recon
         self.localization = localization
-        self.image_png = image_png
         self.first_frame = firstFrame
         self.last_frame = lastFrame
         self.window_jump = windowJump
         self.window_size = windowSize
         super().__init__()
     def run(self):
-        neNa(self.app, self.localization, self.image_png, self.first_frame, self.last_frame, self.window_jump, self.window_size)
+        neNa(self.app, self.image_recon, self.localization, self.first_frame, self.last_frame, self.window_jump, self.window_size)

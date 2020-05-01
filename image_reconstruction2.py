@@ -14,6 +14,7 @@ class ImageReconstruction:
             self.data = pd.read_csv(data)
 
         self.intensity_threshold = intensity_threshold
+        self.selected_regions = []
         self.selections = []
         self.old_face_colors = []
         self.ind_list = []
@@ -50,8 +51,16 @@ class ImageReconstruction:
         selected_data = self.data[ind]
 
         print(len(selected_data))
-        self.selections.append(Fiducial2(selected_data))
+
+        self.selected_regions.append(selected_data)
+        # self.selections.append(Fiducial2(selected_data, self.intensity_threshold, self.file_format))
         print("# fiducials: " + str(len(self.selections)))
+
+    def create_fiducials(self, intensity_threshold):
+        self.selections = []
+        for sr in self.selected_regions:
+            self.selections.append(Fiducial2(sr, intensity_threshold, self.file_format))
+
 
 
     def del_last_selection(self):

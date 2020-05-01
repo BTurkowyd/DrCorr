@@ -2,17 +2,18 @@ from numpy import zeros
 
 class Fiducial2:
 
-    def __init__(self, points, file_format):
+    def __init__(self, points, intensity_threshold, file_format):
         self.fiducial = []
         self.file_format = file_format
+        self.intensity_threshold = intensity_threshold
 
-        if file_format == "RapidSTORM":
+        if self.file_format == "RapidSTORM":
             for f in points:
                 self.fiducial.append(f)
         else:
             for f in points.values:
                 self.fiducial.append(f)
-    
+
     def rel_drift(self):
         self.rel_x = []
         self.rel_y = []
@@ -20,20 +21,24 @@ class Fiducial2:
         self.intensity = []
         for i in range(len(self.fiducial)):
             if self.file_format == "RapidSTORM":
-                self.temp_x = self.fiducial[i][0] - self.fiducial[0][0]
-                self.temp_y = self.fiducial[i][1] - self.fiducial[0][1]
-                self.temp_t = self.fiducial[i][2]
-                self.temp_int = self.fiducial[i][3]
+                if self.fiducial[i][3] >= self.intensity_threshold:
+                    self.temp_x = self.fiducial[i][0] - self.fiducial[0][0]
+                    self.temp_y = self.fiducial[i][1] - self.fiducial[0][1]
+                    self.temp_t = self.fiducial[i][2]
+                    self.temp_int = self.fiducial[i][3]
             else:
-                self.temp_x = self.fiducial[i][2] - self.fiducial[0][2]
-                self.temp_y = self.fiducial[i][3] - self.fiducial[0][3]
-                self.temp_t = self.fiducial[i][1]
-                self.temp_int = self.fiducial[i][5]
-
-            self.rel_x.append(self.temp_x)
-            self.rel_y.append(self.temp_y)
-            self.t.append(self.temp_t)
-            self.intensity.append(self.temp_int)
+                if self.fiducial[i][5] >= self.intensity_threshold:
+                    self.temp_x = self.fiducial[i][2] - self.fiducial[0][2]
+                    self.temp_y = self.fiducial[i][3] - self.fiducial[0][3]
+                    self.temp_t = self.fiducial[i][1]
+                    self.temp_int = self.fiducial[i][5]
+            try:
+                self.rel_x.append(self.temp_x)
+                self.rel_y.append(self.temp_y)
+                self.t.append(self.temp_t)
+                self.intensity.append(self.temp_int)
+            except AttributeError:
+                pass
 
     def stretch_fiducials(self, loc, inputFormat):
         if inputFormat == "RapidSTORM":
