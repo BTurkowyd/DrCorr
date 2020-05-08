@@ -15,14 +15,19 @@ class OPTICS_class:
         self.optics_rois = []
         self.particle_ids = []
         self.order = []
+        self.rois = rois
 
     def run_optics(self):
-        for i, p in enumerate(methods.particles):
-            if self.x_min < p.x < self.x_max and self.y_min < p.y < self.y_max:
-                self.optics_rois.append([p.x, p.y])
-                self.particle_ids.append(i)
+        for i, _ in enumerate(self.rois):
+            self.optics_rois = self.rois[:,:2]
+            self.particle_ids.append(i)
+
+        # for i, p in enumerate(methods.particles):
+        #     if self.x_min < p.x < self.x_max and self.y_min < p.y < self.y_max:
+        #         self.optics_rois.append([p.x, p.y])
+        #         self.particle_ids.append(i)
         
-        self.optics_rois = np.asarray(self.optics_rois)
+        # self.optics_rois = np.asarray(self.optics_rois)
         self.clustering = OPTICS(int(self.minPts), self.max_eps).fit(self.optics_rois)
 
         for ids, label, rd in zip(self.particle_ids, self.clustering.labels_, self.clustering.reachability_):

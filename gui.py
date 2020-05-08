@@ -16,7 +16,6 @@ import dbscan_widget
 import optics_widget
 import swift_wrapper
 import bead_analyzer
-from image_reconstruction_dr_correction import ImageReconstructionDrCorrection
 from image_reconstruction2 import ImageReconstruction
 
 
@@ -264,7 +263,7 @@ class Ui_MainWindow(object):
     def run_display_image(self):
         self.imageDisplay.setDisabled(True)
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-        self.image_recon = ImageReconstructionDrCorrection(self.locfileName, self.fidu_intensity, self.inputFormat.currentText())
+        self.image_recon = ImageReconstruction(self.locfileName, self.fidu_intensity, self.inputFormat.currentText())
         self.imageDisplay.setDisabled(False)
     
     def run_nena(self):
@@ -275,12 +274,12 @@ class Ui_MainWindow(object):
     
     def run_DBSCAN(self):
         self.dbscan = dbscan_widget.Ui_DBSCANanalysis()
-        self.dbscan.setupUi(self.dbscan)
+        self.dbscan.setupUi(self.image_recon, self.dbscan)
         self.dbscan.show()
 
     def run_OPTICS(self):
         self.optics = optics_widget.Ui_OPTICSanalysis()
-        self.optics.setupUi(self.optics)
+        self.optics.setupUi(self.image_recon, self.optics)
         self.optics.show()
 
     def run_swift(self):

@@ -33,7 +33,9 @@ class ImageReconstruction:
 
         self.lasso = LassoSelector(self.ax, self.onselect, button=3)
 
-        plt.axis('off')
+        # plt.axis('off')
+        plt.tight_layout()
+        plt.gca().invert_yaxis()
         plt.show(block=False)
 
         
@@ -48,13 +50,17 @@ class ImageReconstruction:
         self.face_colors[ind, :3] = [0, 1, 0]
         self.ax.figure.canvas.draw_idle()
 
-        selected_data = self.data[ind]
+        if self.file_format == "RapidSTORM":
+            selected_data = self.data[ind]
+        else:
+            selected_data = self.data.loc[ind]
 
         print(len(selected_data))
 
         self.selected_regions.append(selected_data)
         # self.selections.append(Fiducial2(selected_data, self.intensity_threshold, self.file_format))
         print("# fiducials: " + str(len(self.selections)))
+        print(selected_data)
 
     def create_fiducials(self, intensity_threshold):
         self.selections = []
@@ -65,6 +71,7 @@ class ImageReconstruction:
 
     def del_last_selection(self):
         self.selections = self.selections[:-1]
+        self.selected_regions = self.selected_regions[:-1]
 
         ind = self.ind_list[-1]
         face_colors = self.old_face_colors[-1]
@@ -79,6 +86,7 @@ class ImageReconstruction:
 
     def del_all_selections(self):
         self.selections = []
+        self.selected_regions = []
 
         for ind, face_colors in zip(self.ind_list, self.old_face_colors):
             self.face_colors[ind, :3] = face_colors

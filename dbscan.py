@@ -14,14 +14,19 @@ class DBSCAN_class:
         self.minPts = minPts
         self.db_rois = []
         self.particle_ids = []
+        self.rois = rois
     
     def run_dbscan(self):
-        for i, p in enumerate(methods.particles):
-            if self.x_min < p.x < self.x_max and self.y_min < p.y < self.y_max:
-                self.db_rois.append([p.x, p.y])
-                self.particle_ids.append(i)
+        for i, _ in enumerate(self.rois):
+            self.db_rois = self.rois[:,:2]
+            self.particle_ids.append(i)
 
-        self.db_rois = np.asarray(self.db_rois)
+        # for i, p in enumerate(methods.particles):
+        #     if self.x_min < p.x < self.x_max and self.y_min < p.y < self.y_max:
+        #         self.db_rois.append([p.x, p.y])
+        #         self.particle_ids.append(i)
+
+        # self.db_rois = np.asarray(self.db_rois)
         self.clustering = DBSCAN(self.eps, self.minPts).fit(self.db_rois)
 
         for ids, point in zip(self.particle_ids, self.clustering.labels_):

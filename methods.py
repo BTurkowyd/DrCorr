@@ -171,22 +171,16 @@ def neNa(app, image_recon, localization, firstFrame=0, lastFrame=0, windowJump=0
         print("No ROIs selected")
 
 def dr_corr_2(app, fiducials, fiducial_ids):
+        output_folder = os.path.dirname(os.path.realpath(app.locfileName))
+
+        plt.savefig(output_folder + '\\' + 'selected_rois.png')
 
         plt.style.use('classic')
-    # try:
-        # global image, resize, refPt
-
-        # imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
-
-        # iy, ix, iz = shape(image)
 
         if app.inputFormat.currentText() == "RapidSTORM":
             loc = loadtxt(app.locfileName)
         else:
             loc = pd.read_csv(app.locfileName)
-
-        # with open(app.locfileName.split('.')[0] +'\\rois.roi', 'wb') as file:
-        #     pickle.dump(regions, file)
 
         k = 0
         app.progressBar.setMaximum(len(fiducials))
@@ -244,7 +238,7 @@ def dr_corr_2(app, fiducials, fiducial_ids):
                         app.progressBar.setValue(k)
                 app.progressBar.setValue(k)
 
-        output_folder = os.path.dirname(os.path.realpath(app.locfileName))
+        
 
 
         plt.figure()
@@ -301,12 +295,9 @@ def dr_corr_2(app, fiducials, fiducial_ids):
         app.statusBar.setText("Done!")
         print('DONE!!!')
 
-        plt.close("all")
-    # except:
-    #     print("No ROIs selected")    
+        plt.close("all")    
 
 def analyze_fiducials_2(app, fiducials, fiducial_ids):
-
         plt.style.use('classic')
 
     # try:
@@ -415,59 +406,6 @@ def load_particles(app):
             particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
     except:
         print("Localization file not loaded")
-
-def display_image(app):
-    global image, resize, refPt, iy, ix
-
-    numbers = number_gen()
-
-    def click_and_crop(event, x, y, flags, param):
-        global refPt
-        if event == EVENT_LBUTTONDOWN:
-            refPt.append((x, y))
-
-        elif event == EVENT_LBUTTONUP:
-            refPt.append((x, y))
-            rectangler(resize, refPt[-2], refPt[-1], (0, 255, 0), 2)
-            putText(resize, str(next(numbers)), (refPt[-2][0] + 3, refPt[-2][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
-            imshow("image", resize)
-
-    # load the image, clone it, and setup the mouse callback function
-    image = imread(app.imgFileName)
-    clone = image.copy()
-    namedWindow("image")
-    iy, ix, iz = shape(image)
-    resize = resizer(image, (1260, 1080))
-    setMouseCallback("image", click_and_crop)
-    if len(refPt) > 0:
-        for i in range(0,len(refPt), 2):
-            rectangler(resize, refPt[i], refPt[i+1], (0, 255, 0), 2)
-            putText(resize, str(next(numbers)), (refPt[i][0] + 3, refPt[i+1][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
-
-    # keep looping until the 'q' key is pressed
-    while True:
-        # display the image and wait for a keypress
-        imshow("image", resize)
-        key = waitKey(1) & 0xFF
-
-        # if the 'r' key is pressed, reset the cropping region
-        if key == ord("r"):
-            remove_single_roi()
-
-        # if the 'x' key is pressed, reset all ROIs
-        if key == ord("x"):
-            remove_all_rois()
-
-        # if the 'c' key is pressed, break from the loop
-        if key == ord("c"):
-            destroyAllWindows()
-            app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
-            break
-        
-        if getWindowProperty("image",1) < 1:
-            destroyAllWindows()
-            app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
-            break
 
 def load_ROIS(app):
     global image, resize, refPt, iy, ix
