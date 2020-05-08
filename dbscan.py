@@ -5,28 +5,30 @@ import methods
 import gui
 
 class DBSCAN_class:
-    def __init__(self, rois, eps, minPts):
-        self.x_min = rois[0, 0]
-        self.y_min = rois[0, 1]
-        self.x_max = rois[1, 0]
-        self.y_max = rois[1, 1]
+    def __init__(self, rois, eps, minPts, fileFormat="RapidSTORM"):
         self.eps = eps
         self.minPts = minPts
         self.db_rois = []
         self.particle_ids = []
         self.rois = rois
+        self.fileFormat = fileFormat
     
     def run_dbscan(self):
-        for i, _ in enumerate(self.rois):
-            self.db_rois = self.rois[:,:2]
-            self.particle_ids.append(i)
+        if self.fileFormat == "RapidStorm":
+            for i, p in enumerate(self.rois):
+                self.db_rois.append([p[0], p[1]])
+                self.particle_ids.append(i)
+        else:
+            for i, p in self.rois.iterrows():
+                self.db_rois.append([p["x [nm]"], p["y [nm]"]])
+                self.particle_ids.append(i)
 
         # for i, p in enumerate(methods.particles):
         #     if self.x_min < p.x < self.x_max and self.y_min < p.y < self.y_max:
         #         self.db_rois.append([p.x, p.y])
         #         self.particle_ids.append(i)
 
-        # self.db_rois = np.asarray(self.db_rois)
+        self.db_rois = np.asarray(self.db_rois)
         self.clustering = DBSCAN(self.eps, self.minPts).fit(self.db_rois)
 
         for ids, point in zip(self.particle_ids, self.clustering.labels_):

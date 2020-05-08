@@ -5,29 +5,31 @@ import methods
 import gui
 
 class OPTICS_class:
-    def __init__(self, rois, minPts=2, max_eps=np.inf):
-        self.x_min = rois[0, 0]
-        self.y_min = rois[0, 1]
-        self.x_max = rois[1, 0]
-        self.y_max = rois[1, 1]
+    def __init__(self, rois, minPts, max_eps, fileFormat):
         self.max_eps = max_eps
         self.minPts = minPts
         self.optics_rois = []
         self.particle_ids = []
         self.order = []
         self.rois = rois
+        self.fileFormat = fileFormat
 
     def run_optics(self):
-        for i, _ in enumerate(self.rois):
-            self.optics_rois = self.rois[:,:2]
-            self.particle_ids.append(i)
+        if self.fileFormat == "RapidSTORM":
+            for i, p in enumerate(self.rois):
+                self.optics_rois.append([p[0], p[1]])
+                self.particle_ids.append(i)
+        else:
+            for i, p in self.rois.iterrows():
+                self.optics_rois.append([p["x [nm]"], p["y [nm]"]])
+                self.particle_ids.append(i)
 
         # for i, p in enumerate(methods.particles):
         #     if self.x_min < p.x < self.x_max and self.y_min < p.y < self.y_max:
         #         self.optics_rois.append([p.x, p.y])
         #         self.particle_ids.append(i)
         
-        # self.optics_rois = np.asarray(self.optics_rois)
+        self.optics_rois = np.asarray(self.optics_rois)
         self.clustering = OPTICS(int(self.minPts), self.max_eps).fit(self.optics_rois)
 
         for ids, label, rd in zip(self.particle_ids, self.clustering.labels_, self.clustering.reachability_):

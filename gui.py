@@ -274,12 +274,12 @@ class Ui_MainWindow(object):
     
     def run_DBSCAN(self):
         self.dbscan = dbscan_widget.Ui_DBSCANanalysis()
-        self.dbscan.setupUi(self.image_recon, self.dbscan)
+        self.dbscan.setupUi(self.image_recon, self.inputFormat.currentText(), self.dbscan)
         self.dbscan.show()
 
     def run_OPTICS(self):
         self.optics = optics_widget.Ui_OPTICSanalysis()
-        self.optics.setupUi(self.image_recon, self.optics)
+        self.optics.setupUi(self.image_recon, self.inputFormat.currentText() ,self.optics)
         self.optics.show()
 
     def run_swift(self):
