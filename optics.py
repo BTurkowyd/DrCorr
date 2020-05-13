@@ -32,20 +32,20 @@ class OPTICS_class:
         self.optics_rois = np.asarray(self.optics_rois)
         self.clustering = OPTICS(int(self.minPts), self.max_eps).fit(self.optics_rois)
 
-        for ids, label, rd in zip(self.particle_ids, self.clustering.labels_, self.clustering.core_distances_):
+        for ids, label, rd in zip(self.particle_ids, self.clustering.labels_, self.clustering.reachability_):
             methods.particles[ids].optics = label
             methods.particles[ids].optics_rd = rd
         
         for order in self.clustering.ordering_:
             self.order.append(methods.particles[order].optics_rd)
 
-        self.core_ordered = self.clustering.core_distances_[self.clustering.ordering_]
+        self.core_ordered = self.clustering.reachability_[self.clustering.ordering_]
 
     def write(self, order):
         with open("OPTICS_roi_" + str(order) + ".txt", "w") as f:
 
             for i in range(len(self.optics_rois)):
-                f.write("%.2f %.2f %.0f %.2f\n" % (self.optics_rois[i, 0], self.optics_rois[i, 1], self.clustering.labels_[i], self.clustering.core_distances_[i]))
+                f.write("%.2f %.2f %.0f %.2f\n" % (self.optics_rois[i, 0], self.optics_rois[i, 1], self.clustering.labels_[i], self.clustering.reachability_[i]))
             # for ids in self.particle_ids:
             #     f.write("%.2f %.2f %.0f %.2f\n" % (methods.particles[ids].x, methods.particles[ids].y, methods.particles[ids].optics, methods.particles[ids].optics_rd))
         
