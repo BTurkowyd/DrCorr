@@ -36,5 +36,8 @@ class DBSCAN_class:
 
     def write(self, order):
         with open("DBSCAN_roi" + str(order) + ".txt", "w") as f:
-            for ids in self.particle_ids:
-                f.write("%.2f %.2f %.0f\n" % (methods.particles[ids].x, methods.particles[ids].y, methods.particles[ids].dbscan))
+            # for ids in self.particle_ids:
+            #     f.write("%.2f %.2f %.0f\n" % (methods.particles[ids].x, methods.particles[ids].y, methods.particles[ids].dbscan))
+
+            for i in range(len(self.db_rois)):
+                f.write("%.2f %.2f %.0f\n" % (self.db_rois[i, 0], self.db_rois[i, 1], self.clustering.labels_[i]))
