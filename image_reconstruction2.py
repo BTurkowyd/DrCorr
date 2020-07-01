@@ -36,7 +36,7 @@ class ImageReconstruction:
         # plt.axis('off')
         plt.tight_layout()
         plt.gca().invert_yaxis()
-        plt.show(block=False)
+        plt.show()
 
         
     def onselect(self, verts):
