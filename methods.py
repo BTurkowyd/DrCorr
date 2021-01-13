@@ -86,7 +86,7 @@ def CFit_resultsCorr(r, y):
 def calc_NeNA(selections, localization, k, counting=0, nenaList=[]):
     selections = np.asarray(selections.fiducial)
     print(selections)
-    max_frame = np.max(selections[:,2])
+    max_frame = np.max(selections[:,2]) # this is only for rapidstorm format, not thunderstorm! You have to fix it!!!
     print(max_frame)
     length = shape(selections)[0]
     frames = zeros([length, 2])
@@ -121,7 +121,7 @@ def calc_NeNA(selections, localization, k, counting=0, nenaList=[]):
 
 
 def neNa(app, image_recon, localization, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
-    try:
+    # try:
         # global image, resize, refPt
 
         # iy, ix, iz = shape(image)
@@ -167,8 +167,8 @@ def neNa(app, image_recon, localization, firstFrame=0, lastFrame=0, windowJump=0
         np.savetxt(str(output_folder) + "\\NeNA_summary_table.txt", nena_values, fmt='%.2f')
 
         app.statusBar.setText("NeNA calculated!")
-    except:
-        print("No ROIs selected")
+    # except:
+    #     print("No ROIs selected")
 
 def dr_corr_2(app, fiducials, fiducial_ids):
         output_folder = os.path.dirname(os.path.realpath(app.locfileName))
