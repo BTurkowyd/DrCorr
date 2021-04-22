@@ -13,7 +13,7 @@ class Drift:
     def __init__(self, fiducials):
         self.fiducials = fiducials
         self.longest = 0
-        self.window = 401
+        self.window = 101
         
         for f in self.fiducials:
             if len(f.stretch) > self.longest:

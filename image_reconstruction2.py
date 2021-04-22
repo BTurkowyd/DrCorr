@@ -19,6 +19,8 @@ class ImageReconstruction:
         self.old_face_colors = []
         self.ind_list = []
         self.file_format = file_format
+        self.fiducial_order = 1
+        self.fiducial_texts = []
 
         plt.style.use('dark_background')
 
@@ -42,12 +44,14 @@ class ImageReconstruction:
     def onselect(self, verts):
         self.face_colors = self.pts.get_facecolors()
         self.path = Path(verts)
+        print(np.mean(self.path.vertices[:,0]), np.mean(self.path.vertices[:,1]))
 
         ind = np.nonzero(self.path.contains_points(self.pts.get_offsets()))[0]
 
         self.ind_list.append(ind)
         self.old_face_colors.append(self.face_colors[ind, :3])
         self.face_colors[ind, :3] = [0, 1, 0]
+        self.fiducial_texts.append(plt.text(np.mean(self.path.vertices[:,0])-500, np.mean(self.path.vertices[:,1])-500, str(self.fiducial_order), c='g'))
         self.ax.figure.canvas.draw_idle()
 
         if self.file_format == "RapidSTORM":
@@ -56,6 +60,7 @@ class ImageReconstruction:
             selected_data = self.data.loc[ind]
 
         print(len(selected_data))
+        self.fiducial_order += 1
 
         self.selected_regions.append(selected_data)
         # self.selections.append(Fiducial2(selected_data, self.intensity_threshold, self.file_format))
@@ -81,6 +86,9 @@ class ImageReconstruction:
         self.old_face_colors = self.old_face_colors[:-1]
         self.ax.figure.canvas.draw_idle()
         print("# fiducials: " + str(len(self.selections)))
+        self.fiducial_texts[-1].remove()
+        self.fiducial_texts = self.fiducial_texts[:-1]
+        self.fiducial_order -= 1
 
 
     def del_all_selections(self):
@@ -95,3 +103,7 @@ class ImageReconstruction:
         self.old_face_colors = []
         self.ax.figure.canvas.draw_idle()
         print("# fiducials: " + str(len(self.selections)))
+        for txt in self.fiducial_texts:
+            txt.remove()
+        self.fiducial_texts = []
+        self.fiducial_order = 1
