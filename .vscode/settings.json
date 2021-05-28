@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "C:\\ProgramData\\Anaconda3\\python.exe",
+    "python.pythonPath": "/Users/bartoszturkowyd/.virtualenvs/drcorr39_rosetta/bin/python",
     "python.linting.pycodestyleEnabled": false,
     "python.linting.enabled": true,
     "python.linting.flake8Enabled": false,

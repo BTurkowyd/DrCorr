@@ -11,12 +11,6 @@ from itertools import islice
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from cv2 import (EVENT_LBUTTONDOWN, EVENT_LBUTTONUP, FONT_HERSHEY_DUPLEX,
-                 LINE_AA, destroyAllWindows, imread, imshow, imwrite,
-                 namedWindow, putText)
-from cv2 import rectangle as rectangler
-from cv2 import resize as resizer
-from cv2 import setMouseCallback, waitKey, getWindowProperty
 from numpy import loadtxt, shape, sqrt, zeros
 from scipy import spatial
 from scipy.optimize import curve_fit
