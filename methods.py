@@ -53,17 +53,17 @@ def plot_NeNA(NeNA_dist, localization, k):
     x = np.arange(Min, Max, Int, dtype='float')
     y = np.histogram(NeNA_dist, bins=int(Inc), range=(Min, Max), density=True)[0]
     acc, acc_err = CFit_resultsCorr(x, y)
-    NeNA_func = CFunc2dCorr(x, acc[0], acc[1], acc[2], acc[3], acc[4], acc[5])
-    name = 'NeNA_lac_{0}.pdf'.format(k + 1)
-    output_folder = os.path.dirname(os.path.realpath(localization))
-    f, axarr = plt.subplots(1, sharex=False)
-    axarr.bar(x, y, color='gray', edgecolor='black', width=Int)
-    axarr.plot(x, NeNA_func, 'b')
-    axarr.set_xlim([Min, Max])
-    axarr.set_xlabel('loc_acc [nm]')
-    axarr.set_ylabel('Intensity [a.u.]')
-    plt.savefig(str(output_folder) + "\\" + name, format='pdf')
-    plt.close()
+    # NeNA_func = CFunc2dCorr(x, acc[0], acc[1], acc[2], acc[3], acc[4], acc[5])
+    # name = 'NeNA_lac_{0}.pdf'.format(k + 1)
+    # output_folder = os.path.dirname(os.path.realpath(localization))
+    # f, axarr = plt.subplots(1, sharex=False)
+    # axarr.bar(x, y, color='gray', edgecolor='black', width=Int)
+    # axarr.plot(x, NeNA_func, 'b')
+    # axarr.set_xlim([Min, Max])
+    # axarr.set_xlabel('loc_acc [nm]')
+    # axarr.set_ylabel('Intensity [a.u.]')
+    # plt.savefig(str(output_folder) + "\\" + name, format='pdf')
+    # plt.close()
     return acc, acc_err
 
 def CFunc2dCorr(r, a, rc, w, F, A, O):
@@ -109,7 +109,7 @@ def calc_NeNA(selections, localization, k, counting=0, nenaList=[]):
     output_folder = os.path.dirname(os.path.realpath(localization))
     hd = "the average localization accuracy by NeNA is at %.1f [nm]" % (float(NeNA_acc[0]))
     outname = 'NeNA_loc_{0}_{1}.txt'.format(k + 1, counting)
-    np.savetxt(str(output_folder) + "\\" + outname, NeNA_dist, fmt='%.5e', delimiter='   ', header=hd, comments='# ')
+    np.savetxt(os.path.join(output_folder, outname), NeNA_dist, fmt='%.5e', delimiter='   ', header=hd, comments='# ')
     nenaList.append(float(NeNA_acc[0]))
     return float(NeNA_acc[0])
 
@@ -125,7 +125,8 @@ def neNa(app, image_recon, localization, firstFrame=0, lastFrame=0, windowJump=0
         # else:
         #     loc = pd.read_csv(app.locfileName)
 
-        output_folder = os.path.dirname(os.path.realpath(localization))
+        # output_folder = os.path.dirname(os.path.realpath(localization))
+        output_folder = os.path.dirname(os.path.realpath(app.locfileName))
 
         # regions = ROIs(refPt, ix, iy)
         # nena_regions = [NeNA(r, firstFrame, lastFrame, windowJump, windowSize, app.inputFormat.currentText()) for r in regions.rois]
@@ -151,14 +152,15 @@ def neNa(app, image_recon, localization, firstFrame=0, lastFrame=0, windowJump=0
                 for j in range(len(image_recon.selections)):
                     calc_NeNA(image_recon.selections, image_recon, i, counting, nenaList)
                     counting += 1
-                np.savetxt(str(output_folder) + "\\NeNA_summary_" + str(i) + ".txt", nenaList, fmt='%.5e')
+                np.savetxt(os.path.join(output_folder, 'NeNA_summary_', str(i), '.txt'), nenaList, fmt='%.5e')
+                # np.savetxt(str(output_folder) + "\\NeNA_summary_" + str(i) + ".txt", nenaList, fmt='%.5e')
                 nenaSeries.append(nenaList)
             
 
             k += 1
             app.progressBar.setValue(k)
-        
-        np.savetxt(str(output_folder) + "\\NeNA_summary_table.txt", nena_values, fmt='%.2f')
+        np.savetxt(os.path.join(output_folder, 'NeNA_summary_table.txt'), nena_values, fmt='%.2f')
+        # np.savetxt(str(output_folder) + "\\NeNA_summary_table.txt", nena_values, fmt='%.2f')
 
         app.statusBar.setText("NeNA calculated!")
     # except:
@@ -167,7 +169,8 @@ def neNa(app, image_recon, localization, firstFrame=0, lastFrame=0, windowJump=0
 def dr_corr_2(app, fiducials, fiducial_ids):
         output_folder = os.path.dirname(os.path.realpath(app.locfileName))
 
-        plt.savefig(output_folder + '\\' + 'selected_rois.png')
+        plt.savefig(os.path.join(output_folder, 'selected_rois.png'))
+        # plt.savefig(output_folder + '\\' + 'selected_rois.png')
 
         plt.style.use('classic')
 
@@ -206,7 +209,8 @@ def dr_corr_2(app, fiducials, fiducial_ids):
             head = list(islice(input_file, 1))
 
         if app.inputFormat.currentText() == "RapidSTORM":
-            with open(app.locfileName.split('.')[0] + "_corrected.txt", "w") as final_file:
+            with open(os.path.join(output_folder, 'corrected_localizations.txt'), 'w') as final_file:
+            # with open(app.locfileName.split('.')[0] + "_corrected.txt", "w") as final_file:
                 final_file.write(str(head[0]))
                 k = 0
                 app.progressBar.setValue(k)
@@ -219,7 +223,7 @@ def dr_corr_2(app, fiducials, fiducial_ids):
                         app.progressBar.setValue(k)
                 app.progressBar.setValue(k)
         else:
-            with open(app.locfileName.split('.')[0] + "_corrected.csv", "w") as final_file:
+            with open(os.path.join(output_folder, app.locfileName.split('.')[0] + '_corrected.csv'), 'w') as final_file:
                 final_file.write('"id","frame","x [nm]","y [nm]","sigma [nm]","intensity [photon]","offset [photon]","bkgstd [photon]","chi2","uncertainty_xy [nm]"\n')
                 k = 0
                 app.progressBar.setValue(k)
@@ -232,8 +236,9 @@ def dr_corr_2(app, fiducials, fiducial_ids):
                         app.progressBar.setValue(k)
                 app.progressBar.setValue(k)
 
-        
-
+        with open(os.path.join(output_folder, 'beads_st_devs.txt'), 'w') as beads_stdevs:
+            for i, f in enumerate(fiducials):
+                beads_stdevs.write('Fiducial %s\t%1.3f\t%1.3f\n' % (fiducial_ids[i], np.std(f.stretch[:,0]-drift.smooth_x), np.std(f.stretch[:,1]-drift.smooth_y)))
 
         plt.figure()
         for i, f in enumerate(fiducials):
@@ -241,6 +246,11 @@ def dr_corr_2(app, fiducials, fiducial_ids):
             plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
             plt.subplot(212)
             plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            
+            with open(os.path.join(output_folder, 'Fiducial_' + str(fiducial_ids[i]) + '.txt'), 'w') as fiducial_wobbling:
+                for dx, dy in zip(f.stretch[:,0]-drift.smooth_x, f.stretch[:,1]-drift.smooth_y):
+                    fiducial_wobbling.write('%1.3f\t%1.3f\n' % (dx, dy))
+
         
         plt.subplot(211)
         plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
@@ -264,7 +274,7 @@ def dr_corr_2(app, fiducials, fiducial_ids):
         plt.xlabel('Frame')
         plt.ylabel('Y-Drift (nm)')
         plt.legend()
-        plt.savefig(output_folder + "\\" + "drift_trace.png")
+        plt.savefig(os.path.join(output_folder, 'drift_trace.png'))
 
 
         plt.figure()
@@ -279,10 +289,10 @@ def dr_corr_2(app, fiducials, fiducial_ids):
         plt.xlabel('Frame')
         plt.ylabel('Y-SE (nm)')
         plt.grid(True)
-        plt.savefig(output_folder + "\\" + "fiducial_st_err.png")
+        plt.savefig(os.path.join(output_folder,'fiducial_st_err.png'))
         
 
-        with open(output_folder + "\\" + "drift_trace.txt", "w") as drift_file:
+        with open(os.path.join(output_folder, 'drift_trace.txt'), "w") as drift_file:
             for dx, dy in zip(drift.smooth_x, drift.smooth_y):
                 drift_file.write('%1.3f\t%1.3f\n' % (dx, dy))
         
@@ -400,81 +410,6 @@ def load_particles(app):
             particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
     except:
         print("Localization file not loaded")
-
-def load_ROIS(app):
-    global image, resize, refPt, iy, ix
-
-    with open(app.ROIsFile, 'rb') as file:
-        regions = pickle.load(file)    
-
-    refPt = regions.refPt
-    numbers = number_gen()
-
-    def click_and_crop(event, x, y, flags, param):
-        global refPt
-        if event == EVENT_LBUTTONDOWN:
-            refPt.append((x, y))
-
-        elif event == EVENT_LBUTTONUP:
-            refPt.append((x, y))
-            rectangler(resize, refPt[-2], refPt[-1], (0, 255, 0), 2)
-            putText(resize, str(next(numbers)), (refPt[-2][0] + 3, refPt[-2][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
-            imshow("image", resize)
-
-    # load the image, clone it, and setup the mouse callback function
-    image = imread(app.imgFileName)
-    clone = image.copy()
-    namedWindow("image")
-    iy, ix, iz = shape(image)
-    resize = resizer(image, (1260, 1080))
-    setMouseCallback("image", click_and_crop)
-    if len(refPt) > 0:
-        for i in range(0,len(refPt), 2):
-            rectangler(resize, refPt[i], refPt[i+1], (0, 255, 0), 2)
-            putText(resize, str(next(numbers)), (refPt[i][0] + 3, refPt[i+1][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
-
-    # keep looping until the 'q' key is pressed
-    while True:
-        # display the image and wait for a keypress
-        imshow("image", resize)
-        key = waitKey(1) & 0xFF
-
-        # if the 'r' key is pressed, reset the cropping region
-        if key == ord("r"):
-            remove_single_roi()
-
-        # if the 'x' key is pressed, reset all ROIs
-        if key == ord("x"):
-            remove_all_rois()
-
-        # if the 'c' key is pressed, break from the loop
-        if key == ord("c"):
-            destroyAllWindows()
-            app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
-            break
-        
-        if getWindowProperty("image",1) < 1:
-            destroyAllWindows()
-            app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
-            break
-
-def remove_single_roi():
-
-    numbers = number_gen()
-    
-    global refPt, resize
-    del refPt[-2:]
-    resize = resizer(image, (1260, 1080))
-
-    for i in range(0,len(refPt), 2):
-        rectangler(resize, refPt[i], refPt[i+1], (0, 255, 0), 2)
-        putText(resize, str(next(numbers)), (refPt[i][0] + 3, refPt[i+1][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
-
-def remove_all_rois():
-    global refPt, resize
-    refPt = list()
-    resize = resizer(image, (1260, 1080))
-
 class NeNACalculation(QThread):
     def __init__(self, parent, app, image_recon, localization,  firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
         self.app = app
