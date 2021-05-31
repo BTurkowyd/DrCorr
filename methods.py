@@ -53,17 +53,18 @@ def plot_NeNA(NeNA_dist, localization, k):
     x = np.arange(Min, Max, Int, dtype='float')
     y = np.histogram(NeNA_dist, bins=int(Inc), range=(Min, Max), density=True)[0]
     acc, acc_err = CFit_resultsCorr(x, y)
-    # NeNA_func = CFunc2dCorr(x, acc[0], acc[1], acc[2], acc[3], acc[4], acc[5])
-    # name = 'NeNA_lac_{0}.pdf'.format(k + 1)
-    # output_folder = os.path.dirname(os.path.realpath(localization))
-    # f, axarr = plt.subplots(1, sharex=False)
-    # axarr.bar(x, y, color='gray', edgecolor='black', width=Int)
-    # axarr.plot(x, NeNA_func, 'b')
-    # axarr.set_xlim([Min, Max])
-    # axarr.set_xlabel('loc_acc [nm]')
-    # axarr.set_ylabel('Intensity [a.u.]')
+    NeNA_func = CFunc2dCorr(x, acc[0], acc[1], acc[2], acc[3], acc[4], acc[5])
+    name = 'NeNA_loc_{0}.pdf'.format(k + 1)
+    output_folder = os.path.dirname(os.path.realpath(localization))
+    f, axarr = plt.subplots(1, sharex=False)
+    axarr.bar(x, y, color='gray', edgecolor='black', width=Int)
+    axarr.plot(x, NeNA_func, 'b')
+    axarr.set_xlim([Min, Max])
+    axarr.set_xlabel('loc_acc [nm]')
+    axarr.set_ylabel('Intensity [a.u.]')
     # plt.savefig(str(output_folder) + "\\" + name, format='pdf')
-    # plt.close()
+    plt.savefig(os.path.join(output_folder, name), format='pdf')
+    plt.close()
     return acc, acc_err
 
 def CFunc2dCorr(r, a, rc, w, F, A, O):
@@ -410,7 +411,7 @@ def load_particles(app):
             particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
     except:
         print("Localization file not loaded")
-class NeNACalculation(QThread):
+class NeNACalculation():
     def __init__(self, parent, app, image_recon, localization,  firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
         self.app = app
         self.image_recon = image_recon
@@ -419,6 +420,6 @@ class NeNACalculation(QThread):
         self.last_frame = lastFrame
         self.window_jump = windowJump
         self.window_size = windowSize
-        super().__init__()
+        # super().__init__()
     def run(self):
         neNa(self.app, self.image_recon, self.localization, self.first_frame, self.last_frame, self.window_jump, self.window_size)

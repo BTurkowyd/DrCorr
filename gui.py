@@ -267,9 +267,12 @@ class Ui_MainWindow(object):
         self.imageDisplay.setDisabled(False)
     
     def run_nena(self):
-        self.image_recon.create_fiducials(0)
-        self.runNena = methods.NeNACalculation(self, self, self.image_recon, self.locfileName)
-        self.runNena.start()
+        try:
+            self.image_recon.create_fiducials(0)
+            self.runNena = methods.NeNACalculation(self, self, self.image_recon, self.locfileName)
+            self.runNena.run()
+        except AttributeError:
+            print('Please select ROIs.')
         # methods.neNa(self, self.locfileName, self.imgFileName)
     
     def run_DBSCAN(self):
