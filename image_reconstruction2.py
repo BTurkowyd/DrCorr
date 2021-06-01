@@ -64,7 +64,7 @@ class ImageReconstruction:
 
         self.selected_regions.append(selected_data)
         # self.selections.append(Fiducial2(selected_data, self.intensity_threshold, self.file_format))
-        print("# fiducials: " + str(len(self.selections)))
+        print("# fiducials: " + str(len(self.selected_regions)))
 
     def create_fiducials(self, intensity_threshold):
         self.selections = []

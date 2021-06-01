@@ -240,57 +240,56 @@ def dr_corr_2(app, fiducials, fiducial_ids):
         with open(os.path.join(output_folder, 'beads_st_devs.txt'), 'w') as beads_stdevs:
             for i, f in enumerate(fiducials):
                 beads_stdevs.write('Fiducial %s\t%1.3f\t%1.3f\n' % (fiducial_ids[i], np.std(f.stretch[:,0]-drift.smooth_x), np.std(f.stretch[:,1]-drift.smooth_y)))
-
-        plt.figure()
+        
+        
+        # Drift trace figure
+        drift_trace_figure = plt.figure()
+        drift_trace_x = drift_trace_figure.add_subplot(211)
+        drift_trace_y = drift_trace_figure.add_subplot(212)
+        
         for i, f in enumerate(fiducials):
-            plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
-            plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            drift_trace_x.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            drift_trace_y.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
             
             with open(os.path.join(output_folder, 'Fiducial_' + str(fiducial_ids[i]) + '.txt'), 'w') as fiducial_wobbling:
                 for dx, dy in zip(f.stretch[:,0]-drift.smooth_x, f.stretch[:,1]-drift.smooth_y):
                     fiducial_wobbling.write('%1.3f\t%1.3f\n' % (dx, dy))
 
-        
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y, 'k-', label='Y-drift', linewidth=2)
+        drift_trace_x.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
+        drift_trace_y.plot(drift.t, drift.smooth_y, 'k-', label='Y-drift', linewidth=2)
 
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
-        plt.grid(True)
+        drift_trace_x.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
+        drift_trace_x.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
+        drift_trace_x.grid(True)
 
-        plt.xlabel('Frame')
-        plt.ylabel('X-Drift (nm)')
-        plt.legend()
+        drift_trace_x.set_xlabel('Frame')
+        drift_trace_x.set_ylabel('X-Drift (nm)')
+        drift_trace_x.legend()
 
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
-        plt.grid(True)
+        drift_trace_y.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
+        drift_trace_y.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
+        drift_trace_y.grid(True)
 
-        plt.xlabel('Frame')
-        plt.ylabel('Y-Drift (nm)')
-        plt.legend()
-        plt.savefig(os.path.join(output_folder, 'drift_trace.png'))
+        drift_trace_y.set_xlabel('Frame')
+        drift_trace_y.set_ylabel('Y-Drift (nm)')
+        drift_trace_y.legend()
+        drift_trace_figure.savefig(os.path.join(output_folder, 'drift_trace.png'))
 
+        # Fiducial standard error plot
+        fid_std_err_figure = plt.figure()
+        fid_std_err_x = fid_std_err_figure.add_subplot(211)
+        fid_std_err_y = fid_std_err_figure.add_subplot(212)
 
-        plt.figure()
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('X-SE (nm)')
-        plt.grid(True)
+        fid_std_err_x.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
+        fid_std_err_x.set_xlabel('Frame')
+        fid_std_err_x.set_ylabel('X-SE (nm)')
+        fid_std_err_x.grid(True)
 
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('Y-SE (nm)')
-        plt.grid(True)
-        plt.savefig(os.path.join(output_folder,'fiducial_st_err.png'))
+        fid_std_err_y.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
+        fid_std_err_y.set_xlabel('Frame')
+        fid_std_err_y.set_ylabel('Y-SE (nm)')
+        fid_std_err_y.grid(True)
+        fid_std_err_figure.savefig(os.path.join(output_folder,'fiducial_st_err.png'))
         
 
         with open(os.path.join(output_folder, 'drift_trace.txt'), "w") as drift_file:
