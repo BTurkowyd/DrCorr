@@ -27,11 +27,11 @@ class ImageReconstruction:
         if self.file_format == "RapidSTORM":
             self.subplot_kw = dict(xlim=(0, np.max(self.data[:,0])), ylim=(0, np.max(self.data[:,1])), autoscale_on=False)
             _, self.ax = plt.subplots(subplot_kw=self.subplot_kw)
-            self.pts = self.ax.scatter(self.data[:, 0], self.data[:, 1], s=1, c=np.log(self.data[:, 3]), cmap='hot', linewidths=0)
+            self.pts = self.ax.scatter(self.data[:, 0], self.data[:, 1], s=1, c=np.log10(self.data[:, 3]), cmap='hot', linewidths=0)
         else:
             self.subplot_kw = dict(xlim=(0, np.max(self.data["x [nm]"])), ylim=(0, np.max(self.data["y [nm]"])), autoscale_on=False)
             _, self.ax = plt.subplots(subplot_kw=self.subplot_kw)
-            self.pts = self.ax.scatter(self.data["x [nm]"], self.data["y [nm]"], s=1, c=np.log(self.data["intensity [photon]"]), cmap='hot', linewidths=0)            
+            self.pts = self.ax.scatter(self.data["x [nm]"], self.data["y [nm]"], s=1, c=np.log10(self.data["intensity [photon]"]), cmap='hot', linewidths=0)            
 
         self.lasso = LassoSelector(self.ax, self.onselect, button=3)
 

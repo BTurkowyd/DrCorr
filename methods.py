@@ -167,6 +167,8 @@ def neNa(app, image_recon, localization, firstFrame=0, lastFrame=0, windowJump=0
     # except:
     #     print("No ROIs selected")
 
+
+
 def dr_corr_2(app, fiducials, fiducial_ids):
         output_folder = os.path.dirname(os.path.realpath(app.locfileName))
 
@@ -330,12 +332,16 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids):
 
         drift = Drift(fiducials)
 
-        plt.figure()
+        drift_traces_plot = plt.figure()
+        lines_x = []
+        lines_y = []
         for i, f in enumerate(fiducials):
             plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            line_x = plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            lines_x.append(line_x)
             plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            line_y = plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            lines_y.append(line_y)
         
         plt.subplot(211)
         plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
@@ -349,7 +355,7 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids):
 
         plt.xlabel('Frame')
         plt.ylabel('X-Drift (nm)')
-        plt.legend()
+        legend_x = plt.legend(fancybox=True, shadow=True)
 
         plt.subplot(212)
         plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
@@ -358,8 +364,44 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids):
 
         plt.xlabel('Frame')
         plt.ylabel('Y-Drift (nm)')
-        plt.legend()
+        legend_y = plt.legend(fancybox=True, shadow=True)
 
+        lined_y = {}
+        lined_x = {}
+
+        for legline_x, origline_x, legline_y, origline_y in zip(legend_x.get_lines(), lines_x, legend_y.get_lines(), lines_y):
+            legline_x.set_picker(True)
+            lined_x[legline_x] = origline_x
+
+            legline_y.set_picker(True)
+            lined_y[legline_y] = origline_y
+
+        def on_pick_x(event):
+            try:
+                legline = event.artist
+                origline_x = lined_x[legline]
+                for o in origline_x:
+                    visible = not o.get_visible()
+                    o.set_visible(visible)
+                    legline.set_alpha(1.0 if visible else 0.2)
+                    drift_traces_plot.canvas.draw()
+            except KeyError:
+                pass
+        
+        def on_pick_y(event):
+            try:
+                legline = event.artist
+                origline_y = lined_y[legline]
+                for o in origline_y:        
+                    visible = not o.get_visible()
+                    o.set_visible(visible)
+                    legline.set_alpha(1.0 if visible else 0.2)
+                    drift_traces_plot.canvas.draw()
+            except KeyError:
+                pass
+
+        drift_traces_plot.canvas.mpl_connect('pick_event', on_pick_x)
+        drift_traces_plot.canvas.mpl_connect('pick_event', on_pick_y)
 
         plt.figure()
         plt.subplot(211)
@@ -374,24 +416,66 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids):
         plt.ylabel('Y-SE (nm)')
         plt.grid(True)
 
-        plt.figure()
+        corrected_drifts_plot = plt.figure()
+
+        corr_lines_x = []
+        corr_lines_y = []
         for i, f in enumerate(fiducials):
             plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0]-drift.smooth_x, '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            corr_line_x = plt.plot(f.stretch[:,2], f.stretch[:,0]-drift.smooth_x, '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            corr_lines_x.append(corr_line_x)
             plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1]-drift.smooth_y, '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            corr_line_y = plt.plot(f.stretch[:,2], f.stretch[:,1]-drift.smooth_y, '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            corr_lines_y.append(corr_line_y)
 
         plt.subplot(211)
         plt.xlabel("Frame")
         plt.ylabel("dX (nm)")
         plt.grid(True)
-        plt.legend()
+        corr_legend_x = plt.legend(fancybox=True, shadow=True)
 
         plt.subplot(212)
         plt.xlabel("Frame")
         plt.ylabel("dY (nm)")
         plt.grid(True)
-        plt.legend()
+        corr_legend_y = plt.legend(fancybox=True, shadow=True)
+
+        corr_lined_y = {}
+        corr_lined_x = {}
+
+        for corr_legline_x, corr_origline_x, corr_legline_y, corr_origline_y in zip(corr_legend_x.get_lines(), corr_lines_x, corr_legend_y.get_lines(), corr_lines_y):
+            corr_legline_x.set_picker(True)
+            corr_lined_x[corr_legline_x] = corr_origline_x
+
+            corr_legline_y.set_picker(True)
+            corr_lined_y[corr_legline_y] = corr_origline_y
+
+        def corr_on_pick_x(event):
+            try:
+                legline = event.artist
+                corr_origline_x = corr_lined_x[legline]
+                for o in corr_origline_x:
+                    visible = not o.get_visible()
+                    o.set_visible(visible)
+                    legline.set_alpha(1.0 if visible else 0.2)
+                    corrected_drifts_plot.canvas.draw()
+            except KeyError:
+                pass
+        
+        def corr_on_pick_y(event):
+            try:
+                legline = event.artist
+                corr_origline_y = corr_lined_y[legline]
+                for o in corr_origline_y:        
+                    visible = not o.get_visible()
+                    o.set_visible(visible)
+                    legline.set_alpha(1.0 if visible else 0.2)
+                    corrected_drifts_plot.canvas.draw()
+            except KeyError:
+                pass
+
+        corrected_drifts_plot.canvas.mpl_connect('pick_event', corr_on_pick_x)
+        corrected_drifts_plot.canvas.mpl_connect('pick_event', corr_on_pick_y)
 
         plt.show()
 
