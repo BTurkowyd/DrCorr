@@ -6,12 +6,9 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-from numpy import shape
+from PyQt5 import QtCore, QtWidgets
 
 import optics
-import methods
-import rois
 
 class Ui_OPTICSanalysis(QtWidgets.QMainWindow):
     def setupUi(self, image, fileFormat, OPTICSanalysis):

@@ -2,7 +2,6 @@ from sklearn.cluster import DBSCAN
 import numpy as np
 
 import methods
-import gui
 
 class DBSCAN_class:
     def __init__(self, rois, eps, minPts, fileFormat="RapidSTORM"):

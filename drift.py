@@ -5,9 +5,7 @@ Created on Tue Feb 27 16:08:03 2018
 @author: turkowyd
 """
 from numpy import empty, concatenate, nan, nanmean, shape, isnan, array, savetxt, linspace, nanstd
-from kalman_filter import KalmanFilterXY
 from scipy.signal import savgol_filter
-import matplotlib.pyplot as plt
 
 class Drift:
     def __init__(self, fiducials):

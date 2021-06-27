@@ -6,10 +6,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-import numpy as np
-import matplotlib.pyplot as plt
-from particle import Particle
+from PyQt5 import QtCore, QtWidgets
 import sys
 import methods
 import dbscan_widget

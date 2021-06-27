@@ -2,7 +2,6 @@ from sklearn.cluster import OPTICS
 import numpy as np
 
 import methods
-import gui
 
 class OPTICS_class:
     def __init__(self, rois, minPts, max_eps, fileFormat):

@@ -6,12 +6,9 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-from numpy import shape
+from PyQt5 import QtCore, QtWidgets
 
 import dbscan
-import methods
-import rois
 
 class Ui_DBSCANanalysis(QtWidgets.QMainWindow):
     def setupUi(self, image, fileFormat, DBSCANanalysis):
