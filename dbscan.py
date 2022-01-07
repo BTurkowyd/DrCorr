@@ -13,7 +13,7 @@ class DBSCAN_class:
         self.fileFormat = fileFormat
     
     def run_dbscan(self):
-        if self.fileFormat == "RapidStorm":
+        if self.fileFormat == "RapidSTORM":
             for i, p in enumerate(self.rois):
                 self.db_rois.append([p[0], p[1]])
                 self.particle_ids.append(i)
