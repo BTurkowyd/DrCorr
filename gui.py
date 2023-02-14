@@ -10,6 +10,7 @@ from PyQt5 import QtCore, QtWidgets
 import sys
 import methods
 import dbscan_widget
+import nena_widget
 import optics_widget
 import swift_wrapper
 import bead_analyzer
@@ -264,10 +265,13 @@ class Ui_MainWindow(object):
         self.imageDisplay.setDisabled(False)
     
     def run_nena(self):
+        self.nena = nena_widget.Ui_NeNA()
+        self.nena.setupUi(self.image_recon, self.inputFormat.currentText(), self.nena)
+        self.nena.show()
         try:
             self.image_recon.create_fiducials(0)
             self.runNena = methods.NeNACalculation(self, self, self.image_recon, self.locfileName)
-            self.runNena.run()
+            # self.runNena.run()
         except AttributeError:
             print('Please select ROIs.')
         # methods.neNa(self, self.locfileName, self.imgFileName)
