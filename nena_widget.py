@@ -4,7 +4,7 @@ import nena
 class Ui_NeNA(QtWidgets.QMainWindow):
     def setupUi(self, image, fileFormat, NeNAAnalysis):
         NeNAAnalysis.setObjectName("NeNAanalysis")
-        NeNAAnalysis.resize(300,133)
+        NeNAAnalysis.resize(300,403)
         self.image = image
         self.fileFormat = fileFormat
 
@@ -48,30 +48,30 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.retranslateUi(NeNAAnalysis)
         QtCore.QMetaObject.connectSlotsByName(NeNAAnalysis)
 
-    def retranslateUi(self, NeNAanalysis):
+    def retranslateUi(self, NeNAAnalysis):
         _translate = QtCore.QCoreApplication.translate
-        NeNAanalysis.setWindowTitle(_translate("NeNAanalysis", "NeNA analysis"))
-        self.lowerBoundLabel.setText(_translate("NeNAanalysis", "Lower Bound"))
+        NeNAAnalysis.setWindowTitle(_translate("NeNAAnalysis", "NeNA analysis"))
+        self.setDefaults.setText(_translate("NeNAanalysis", "Set Defaults"))
+        self.runNeNA.setText(_translate("NeNAanalysis", "Compute NeNA"))
+        self.lowerBoundLabel.setText(_translate("NeNAAnalysis", "Lower Bound"))
         self.lowerBoundValue.setHtml(_translate("NeNAanalysis", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.875pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">0</p></body></html>"))
-        self.initialLabel.setText(_translate("NeNAanalysis", "Initial Value"))
-        # self.initialValue.setHtml(_translate("NeNAanalysis", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-        # "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-        # "p, li { white-space: pre-wrap; }\n"
-        # "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.875pt; font-weight:400; font-style:normal;\">\n"
-        # "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">25</p></body></html>"))
-        self.upperBoundLabel.setText(_translate("NeNAanalysis", "Upper Bound"))
-        # self.upperBoundValue.setHtml(_translate("NeNAanalysis", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-        # "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-        # "p, li { white-space: pre-wrap; }\n"
-        # "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.875pt; font-weight:400; font-style:normal;\">\n"
-        # "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">50</p></body></html>"))
+        self.initialLabel.setText(_translate("NeNAAnalysis", "Initial Value"))
+        self.initialValue.setHtml(_translate("NeNAanalysis", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.875pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">25</p></body></html>"))
+        self.upperBoundLabel.setText(_translate("NeNAAnalysis", "Upper Bound"))
+        self.upperBoundValue.setHtml(_translate("NeNAanalysis", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.875pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">50</p></body></html>"))
 
-        self.setDefaults.setText(_translate("NeNAanalysis", "Set Defaults"))
-        self.runNeNA.setText(_translate("NeNAanalysis", "Compute NeNA"))
     
     def run_nena():
         pass
