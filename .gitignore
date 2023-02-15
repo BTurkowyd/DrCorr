@@ -1,3 +1,5 @@
-*.txt
 *.json
+*.pdf
+*.png
 __pycache__/*.pyc
+fta2_1_MMStack_Pos0.ome.tif_Results_uncorrected.csv

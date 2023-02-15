@@ -11,25 +11,13 @@ from itertools import islice
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from cv2 import (EVENT_LBUTTONDOWN, EVENT_LBUTTONUP, FONT_HERSHEY_DUPLEX,
-                 LINE_AA, destroyAllWindows, imread, imshow, imwrite,
-                 namedWindow, putText)
-from cv2 import rectangle as rectangler
-from cv2 import resize as resizer
-from cv2 import setMouseCallback, waitKey, getWindowProperty
 from numpy import loadtxt, shape, sqrt, zeros
 from scipy import spatial
 from scipy.optimize import curve_fit
-import pickle
 
 from drift import Drift
-from fiducial import Fiducial
-from kalman_filter import KalmanFilterXY
-from nena import NeNA
 from particle import Particle
-from rois import ROIs
 
-from PyQt5.QtCore import QThread
 
 refPt = list()
 resize = None
@@ -61,7 +49,7 @@ def plot_NeNA(NeNA_dist, localization, k):
     y = np.histogram(NeNA_dist, bins=int(Inc), range=(Min, Max), density=True)[0]
     acc, acc_err = CFit_resultsCorr(x, y)
     NeNA_func = CFunc2dCorr(x, acc[0], acc[1], acc[2], acc[3], acc[4], acc[5])
-    name = 'NeNA_lac_{0}.pdf'.format(k + 1)
+    name = 'NeNA_loc_{0}.pdf'.format(k + 1)
     output_folder = os.path.dirname(os.path.realpath(localization))
     f, axarr = plt.subplots(1, sharex=False)
     axarr.bar(x, y, color='gray', edgecolor='black', width=Int)
@@ -69,7 +57,8 @@ def plot_NeNA(NeNA_dist, localization, k):
     axarr.set_xlim([Min, Max])
     axarr.set_xlabel('loc_acc [nm]')
     axarr.set_ylabel('Intensity [a.u.]')
-    plt.savefig(str(output_folder) + "\\" + name, format='pdf')
+    # plt.savefig(str(output_folder) + "\\" + name, format='pdf')
+    plt.savefig(os.path.join(output_folder, name), format='pdf')
     plt.close()
     return acc, acc_err
 
@@ -84,27 +73,30 @@ def CFit_resultsCorr(r, y):
     popt, pcov = curve_fit(CFunc2dCorr, r, y, p0)
     return popt, pcov
 
-def calc_NeNA(locs, localization, k, counting=0, nenaList=[]):
-    max_frame = np.max(locs[:, 2])
-    length = shape(locs)[0]
+def calc_NeNA(selections, localization, k, counting=0, nenaList=[]):
+    selections = np.asarray(selections.fiducial)
+    print(selections)
+    max_frame = np.max(selections[:,2]) # this is only for rapidstorm format, not thunderstorm! You have to fix it!!!
+    print(max_frame)
+    length = shape(selections)[0]
     frames = zeros([length, 2])
-    frames[:, 1] = locs[:, 2]
+    frames[:, 1] = selections[:, 2]
     tree = spatial.KDTree(frames[:, 0:2])
     d = zeros([length, 1])
     p = -1
     for i in range(length - 1):
-        o = locs[i, 2]
+        o = selections[i, 2]
         # j muss angeben,ob nächster Frame existent ist
-        j = locs[i + 1, 2] - locs[i, 2]
-        if locs[i, 2] < max_frame and o == p:
-            d[i] = min_dist(locs[i, 0:3], temp_locs)
+        j = selections[i + 1, 2] - selections[i, 2]
+        if selections[i, 2] < max_frame and o == p:
+            d[i] = min_dist(selections[i, 0:3], temp_locs)
             p = o
-        elif locs[i, 2] < max_frame and o > p:
-            temp_locs = locs[tree.query_ball_point([0, o + 1], 0.1), 0:2]
+        elif selections[i, 2] < max_frame and o > p:
+            temp_locs = selections[tree.query_ball_point([0, o + 1], 0.1), 0:2]
             if np.shape(temp_locs)[0] > 0:
-                d[i] = min_dist(locs[i, 0:3], temp_locs)
+                d[i] = min_dist(selections[i, 0:3], temp_locs)
                 p = o
-        elif locs[i, 2] == max_frame:
+        elif selections[i, 2] == max_frame:
             break
     print('\n')
     idx = d > 0
@@ -113,83 +105,77 @@ def calc_NeNA(locs, localization, k, counting=0, nenaList=[]):
     output_folder = os.path.dirname(os.path.realpath(localization))
     hd = "the average localization accuracy by NeNA is at %.1f [nm]" % (float(NeNA_acc[0]))
     outname = 'NeNA_loc_{0}_{1}.txt'.format(k + 1, counting)
-    np.savetxt(str(output_folder) + "\\" + outname, NeNA_dist, fmt='%.5e', delimiter='   ', header=hd, comments='# ')
+    np.savetxt(os.path.join(output_folder, outname), NeNA_dist, fmt='%.5e', delimiter='   ', header=hd, comments='# ')
     nenaList.append(float(NeNA_acc[0]))
     return float(NeNA_acc[0])
 
-def neNa(app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
-    try:
-        global image, resize, refPt
 
-        iy, ix, iz = shape(image)
+def neNa(app, image_recon, localization, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
+    # try:
+        # global image, resize, refPt
 
-        if app.inputFormat.currentText() == "RapidSTORM":
-            loc = loadtxt(localization)
-        else:
-            loc = pd.read_csv(app.locfileName)
+        # iy, ix, iz = shape(image)
 
-        output_folder = os.path.dirname(os.path.realpath(localization))
+        # if app.inputFormat.currentText() == "RapidSTORM":
+        #     loc = loadtxt(image_recon)
+        # else:
+        #     loc = pd.read_csv(app.locfileName)
 
-        regions = ROIs(refPt, ix, iy)
-        nena_regions = [NeNA(r, firstFrame, lastFrame, windowJump, windowSize, app.inputFormat.currentText()) for r in regions.rois]
+        # output_folder = os.path.dirname(os.path.realpath(localization))
+        output_folder = os.path.dirname(os.path.realpath(app.locfileName))
 
-        app.statusBar.setText("Calculating NeNA values")
+        # regions = ROIs(refPt, ix, iy)
+        # nena_regions = [NeNA(r, firstFrame, lastFrame, windowJump, windowSize, app.inputFormat.currentText()) for r in regions.rois]
 
-        for n in nena_regions:
-            n.nena_roi(loc, firstFrame, lastFrame, windowJump, windowSize)
+        # app.statusBar.setText("Calculating NeNA values")
+
+        # for n in nena_regions:
+        #     n.nena_roi(loc, firstFrame, lastFrame, windowJump, windowSize)
 
         k = 0
-        app.progressBar.setMaximum(len(nena_regions))
+        app.progressBar.setMaximum(len(image_recon.selections))
         app.progressBar.setValue(k)
 
         nena_values = []
-        for i in range(len(nena_regions)):
+        for i in range(len(image_recon.selections)):
             if (windowJump or windowSize) == 0:
-                nena_values.append(calc_NeNA(nena_regions[i].nena, localization, i))
+                nena_values.append(calc_NeNA(image_recon.selections[i], localization, i))
 
             else:
                 counting = 0
                 nenaList = []
                 nenaSeries = []
-                for j in range(len(nena_regions[i].nena)):
-                    calc_NeNA(nena_regions[i].nena[j], localization, i, counting, nenaList)
+                for j in range(len(image_recon.selections)):
+                    calc_NeNA(image_recon.selections, image_recon, i, counting, nenaList)
                     counting += 1
-                np.savetxt(str(output_folder) + "\\NeNA_summary_" + str(i) + ".txt", nenaList, fmt='%.5e')
+                np.savetxt(os.path.join(output_folder, 'NeNA_summary_', str(i), '.txt'), nenaList, fmt='%.5e')
+                # np.savetxt(str(output_folder) + "\\NeNA_summary_" + str(i) + ".txt", nenaList, fmt='%.5e')
                 nenaSeries.append(nenaList)
             
 
             k += 1
             app.progressBar.setValue(k)
-        
-        np.savetxt(str(output_folder) + "\\NeNA_summary_table.txt", nena_values, fmt='%.2f')
+        np.savetxt(os.path.join(output_folder, 'NeNA_summary_table.txt'), nena_values, fmt='%.2f')
+        # np.savetxt(str(output_folder) + "\\NeNA_summary_table.txt", nena_values, fmt='%.2f')
 
         app.statusBar.setText("NeNA calculated!")
-    except:
-        print("No ROIs selected")
+    # except:
+    #     print("No ROIs selected")
 
-def dr_corr(app):
 
-    regions = None
-    plt.close()
 
-    try:
-        global image, resize, refPt
+def dr_corr_2(app, fiducials, fiducial_ids):
+        output_folder = os.path.dirname(os.path.realpath(app.locfileName))
 
-        imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
+        plt.savefig(os.path.join(output_folder, 'selected_rois.png'))
+        # plt.savefig(output_folder + '\\' + 'selected_rois.png')
 
-        iy, ix, iz = shape(image)
+        plt.style.use('classic')
 
         if app.inputFormat.currentText() == "RapidSTORM":
             loc = loadtxt(app.locfileName)
         else:
             loc = pd.read_csv(app.locfileName)
-
-        regions = ROIs(refPt, ix, iy)
-
-        with open('rois.roi', 'wb') as file:
-            pickle.dump(regions, file)
-
-        fiducials = [Fiducial(r, app.fidu_intensity) for r in regions.rois]
 
         k = 0
         app.progressBar.setMaximum(len(fiducials))
@@ -197,8 +183,7 @@ def dr_corr(app):
         app.statusBar.setText("Extracting fiducial markers")
 
         for f in fiducials:
-            f.extract_fiducial(loc, app.inputFormat.currentText())
-            f.rel_drift(app.inputFormat.currentText())
+            f.rel_drift()
             f.stretch_fiducials(loc, app.inputFormat.currentText())
             k += 1
             app.progressBar.setValue(k)
@@ -222,7 +207,8 @@ def dr_corr(app):
             head = list(islice(input_file, 1))
 
         if app.inputFormat.currentText() == "RapidSTORM":
-            with open(app.locfileName.split('.')[0] + "_corrected.txt", "w") as final_file:
+            with open(os.path.join(output_folder, 'corrected_localizations.txt'), 'w') as final_file:
+            # with open(app.locfileName.split('.')[0] + "_corrected.txt", "w") as final_file:
                 final_file.write(str(head[0]))
                 k = 0
                 app.progressBar.setValue(k)
@@ -235,7 +221,7 @@ def dr_corr(app):
                         app.progressBar.setValue(k)
                 app.progressBar.setValue(k)
         else:
-            with open(app.locfileName.split('.')[0] + "_corrected.csv", "w") as final_file:
+            with open(os.path.join(output_folder, app.locfileName.split('.')[0] + '_corrected.csv'), 'w') as final_file:
                 final_file.write('"id","frame","x [nm]","y [nm]","sigma [nm]","intensity [photon]","offset [photon]","bkgstd [photon]","chi2","uncertainty_xy [nm]"\n')
                 k = 0
                 app.progressBar.setValue(k)
@@ -248,298 +234,85 @@ def dr_corr(app):
                         app.progressBar.setValue(k)
                 app.progressBar.setValue(k)
 
-        output_folder = os.path.dirname(os.path.realpath(app.locfileName))
-
-
-
+        with open(os.path.join(output_folder, 'beads_st_devs.txt'), 'w') as beads_stdevs:
+            for i, f in enumerate(fiducials):
+                beads_stdevs.write('Fiducial %s\t%1.3f\t%1.3f\n' % (fiducial_ids[i], np.std(f.stretch[:,0]-drift.smooth_x), np.std(f.stretch[:,1]-drift.smooth_y)))
+        
+        
+        # Drift trace figure
+        drift_trace_figure = plt.figure()
+        drift_trace_x = drift_trace_figure.add_subplot(211)
+        drift_trace_y = drift_trace_figure.add_subplot(212)
+        
         for i, f in enumerate(fiducials):
-            plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
-            plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
+            drift_trace_x.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            drift_trace_y.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            
+            with open(os.path.join(output_folder, 'Fiducial_' + str(fiducial_ids[i]) + '.txt'), 'w') as fiducial_wobbling:
+                for dx, dy in zip(f.stretch[:,0]-drift.smooth_x, f.stretch[:,1]-drift.smooth_y):
+                    fiducial_wobbling.write('%1.3f\t%1.3f\n' % (dx, dy))
+
+        drift_trace_x.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
+        drift_trace_y.plot(drift.t, drift.smooth_y, 'k-', label='Y-drift', linewidth=2)
+
+        drift_trace_x.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
+        drift_trace_x.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
+        drift_trace_x.grid(True)
+
+        drift_trace_x.set_xlabel('Frame')
+        drift_trace_x.set_ylabel('X-Drift (nm)')
+        drift_trace_x.legend()
+
+        drift_trace_y.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
+        drift_trace_y.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
+        drift_trace_y.grid(True)
+
+        drift_trace_y.set_xlabel('Frame')
+        drift_trace_y.set_ylabel('Y-Drift (nm)')
+        drift_trace_y.legend()
+        drift_trace_figure.savefig(os.path.join(output_folder, 'drift_trace.png'))
+
+        # Fiducial standard error plot
+        fid_std_err_figure = plt.figure()
+        fid_std_err_x = fid_std_err_figure.add_subplot(211)
+        fid_std_err_y = fid_std_err_figure.add_subplot(212)
+
+        fid_std_err_x.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
+        fid_std_err_x.set_xlabel('Frame')
+        fid_std_err_x.set_ylabel('X-SE (nm)')
+        fid_std_err_x.grid(True)
+
+        fid_std_err_y.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
+        fid_std_err_y.set_xlabel('Frame')
+        fid_std_err_y.set_ylabel('Y-SE (nm)')
+        fid_std_err_y.grid(True)
+        fid_std_err_figure.savefig(os.path.join(output_folder,'fiducial_st_err.png'))
         
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y, 'k-', label='Y-drift', linewidth=2)
 
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
-        plt.grid(True)
-
-        plt.xlabel('Frame')
-        plt.ylabel('X-Drift (nm)')
-        plt.legend()
-
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
-        plt.grid(True)
-
-        plt.xlabel('Frame')
-        plt.ylabel('Y-Drift (nm)')
-        plt.legend()
-        plt.savefig(output_folder + "\\" + "drift_trace.png")
-
-
-        plt.figure()
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('X-SE (nm)')
-        plt.grid(True)
-
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('Y-SE (nm)')
-        plt.grid(True)
-        plt.savefig(output_folder + "\\" + "fiducial_st_err.png")
-        
-
-        with open(output_folder + "\\" + "drift_trace.txt", "w") as drift_file:
+        with open(os.path.join(output_folder, 'drift_trace.txt'), "w") as drift_file:
             for dx, dy in zip(drift.smooth_x, drift.smooth_y):
                 drift_file.write('%1.3f\t%1.3f\n' % (dx, dy))
         
         app.statusBar.setText("Done!")
         print('DONE!!!')
-    except:
-        print("No ROIs selected")
 
-def dr_corr_2(app, fiducials, fiducial_ids, regions):
-    try:
-        global image, resize, refPt
+        plt.close("all")    
 
-        imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
-
-        iy, ix, iz = shape(image)
-
-        if app.inputFormat.currentText() == "RapidSTORM":
-            loc = loadtxt(app.locfileName)
-        else:
-            loc = pd.read_csv(app.locfileName)
-
-        with open(app.locfileName.split('.')[0] +'rois.roi', 'wb') as file:
-            pickle.dump(regions, file)
-
-        k = 0
-        app.progressBar.setMaximum(len(fiducials))
-        app.progressBar.setValue(k)
-        app.statusBar.setText("Extracting fiducial markers")
-
-        for f in fiducials:
-            f.extract_fiducial(loc, app.inputFormat.currentText())
-            f.rel_drift(app.inputFormat.currentText())
-            f.stretch_fiducials(loc, app.inputFormat.currentText())
-            k += 1
-            app.progressBar.setValue(k)
-
-        drift = Drift(fiducials)
-
-        k = 0
-        app.progressBar.setMaximum(len(loc))
-        app.progressBar.setValue(k)
-        app.statusBar.setText("Applying the drift correction")
-
-        for p in particles:
-            p.load_drift(drift)
-            p.apply_drift()
-            k += 1
-            if k % 1000 == 0:
-                app.progressBar.setValue(k)
-        app.progressBar.setValue(k)    
-
-        with open(app.locfileName) as input_file:
-            head = list(islice(input_file, 1))
-
-        if app.inputFormat.currentText() == "RapidSTORM":
-            with open(app.locfileName.split('.')[0] + "_corrected.txt", "w") as final_file:
-                final_file.write(str(head[0]))
-                k = 0
-                app.progressBar.setValue(k)
-                app.progressBar.setMaximum(len(loc))
-                app.statusBar.setText("Saving a new localization file")
-                for p in particles:
-                    final_file.write('%1.1f %1.1f %1.0f %1.0f\n' % (p.new_x, p.new_y, p.t, p.I))
-                    k += 1
-                    if k % 1000 == 0:
-                        app.progressBar.setValue(k)
-                app.progressBar.setValue(k)
-        else:
-            with open(app.locfileName.split('.')[0] + "_corrected.csv", "w") as final_file:
-                final_file.write('"id","frame","x [nm]","y [nm]","sigma [nm]","intensity [photon]","offset [photon]","bkgstd [photon]","chi2","uncertainty_xy [nm]"\n')
-                k = 0
-                app.progressBar.setValue(k)
-                app.progressBar.setMaximum(len(loc))
-                app.statusBar.setText("Saving a new localization file")
-                for p in particles:
-                    final_file.write("%1.0f,%1.0f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f,%1.5f\n" % (p.id, p.t, p.new_x, p.new_y, p.sigma, p.I, p.offset, p.bkgstd, p.chi2, p.uncertainty))
-                    k += 1
-                    if k % 1000 == 0:
-                        app.progressBar.setValue(k)
-                app.progressBar.setValue(k)
-
-        output_folder = os.path.dirname(os.path.realpath(app.locfileName))
-
-
-
-        for i, f in enumerate(fiducials):
-            plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
-            plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
-        
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y, 'k-', label='Y-drift', linewidth=2)
-
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
-        plt.grid(True)
-
-        plt.xlabel('Frame')
-        plt.ylabel('X-Drift (nm)')
-        plt.legend()
-
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
-        plt.grid(True)
-
-        plt.xlabel('Frame')
-        plt.ylabel('Y-Drift (nm)')
-        plt.legend()
-        plt.savefig(output_folder + "\\" + "drift_trace.png")
-
-
-        plt.figure()
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('X-SE (nm)')
-        plt.grid(True)
-
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('Y-SE (nm)')
-        plt.grid(True)
-        plt.savefig(output_folder + "\\" + "fiducial_st_err.png")
-        
-
-        with open(output_folder + "\\" + "drift_trace.txt", "w") as drift_file:
-            for dx, dy in zip(drift.smooth_x, drift.smooth_y):
-                drift_file.write('%1.3f\t%1.3f\n' % (dx, dy))
-        
-        app.statusBar.setText("Done!")
-        print('DONE!!!')
-    except:
-        print("No ROIs selected")    
-
-def analyze_fiducials(app):
-
-    regions = None
-    plt.clf()
-
-    try:
-        global image, resize, refPt
-
-        imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
-
-        iy, ix, iz = shape(image)
-
-        if app.inputFormat.currentText() == "RapidSTORM":
-            loc = loadtxt(app.locfileName)
-        else:
-            loc = pd.read_csv(app.locfileName)
-
-        regions = ROIs(refPt, ix, iy)
-
-        with open('rois.roi', 'wb') as file:
-            pickle.dump(regions, file)
-
-        fiducials = [Fiducial(r, app.fidu_intensity) for r in regions.rois]
-
-        k = 0
-        app.progressBar.setMaximum(len(fiducials))
-        app.progressBar.setValue(k)
-        app.statusBar.setText("Extracting fiducial markers")
-
-        for f in fiducials:
-            f.extract_fiducial(loc, app.inputFormat.currentText())
-            f.rel_drift(app.inputFormat.currentText())
-            f.stretch_fiducials(loc, app.inputFormat.currentText())
-            k += 1
-            app.progressBar.setValue(k)
-
-        drift = Drift(fiducials)
-
-
-        for i, f in enumerate(fiducials):
-            plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
-            plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(i+1), alpha=0.5)
-        
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y, 'k-', label='Y-drift', linewidth=2)
-
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_x + drift.smooth_std_x, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_x - drift.smooth_std_x, 'k-', linewidth=1)
-        plt.grid(True)
-
-        plt.xlabel('Frame')
-        plt.ylabel('X-Drift (nm)')
-        plt.legend()
-
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
-        plt.plot(drift.t, drift.smooth_y - drift.smooth_std_y, 'k-', linewidth=1)
-        plt.grid(True)
-
-        plt.xlabel('Frame')
-        plt.ylabel('Y-Drift (nm)')
-        plt.legend()
-
-
-        plt.figure()
-        plt.subplot(211)
-        plt.plot(drift.t, drift.smooth_std_x/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('X-SE (nm)')
-        plt.grid(True)
-
-        plt.subplot(212)
-        plt.plot(drift.t, drift.smooth_std_y/np.sqrt(len(fiducials)), 'k-', linewidth=1)
-        plt.xlabel('Frame')
-        plt.ylabel('Y-SE (nm)')
-        plt.grid(True)
-
-        plt.show()
-
-    except:
-        print("No beads selected")
-
-def analyze_fiducials_2(app, fiducials, fiducial_ids, regions):
+def analyze_fiducials_2(app, fiducials, fiducial_ids):
+        plt.style.use('classic')
 
     # try:
-        global image, resize, refPt
+        # global image, resize, refPt
 
-        imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
+        # imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
 
         if app.inputFormat.currentText() == "RapidSTORM":
             loc = loadtxt(app.locfileName)
         else:
             loc = pd.read_csv(app.locfileName)
 
-        with open(app.locfileName.split('.')[0] + 'rois.roi', 'wb') as file:
-            pickle.dump(regions, file)
+        # with open(app.locfileName.split('.')[0] + '\\rois.roi', 'wb') as file:
+        #     pickle.dump(regions, file)
 
         k = 0
         app.progressBar.setMaximum(len(fiducials))
@@ -547,20 +320,23 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids, regions):
         app.statusBar.setText("Extracting fiducial markers")
 
         for f in fiducials:
-            f.extract_fiducial(loc, app.inputFormat.currentText())
-            f.rel_drift(app.inputFormat.currentText())
+            f.rel_drift()
             f.stretch_fiducials(loc, app.inputFormat.currentText())
             k += 1
             app.progressBar.setValue(k)
 
         drift = Drift(fiducials)
 
-
+        drift_traces_plot = plt.figure()
+        lines_x = []
+        lines_y = []
         for i, f in enumerate(fiducials):
             plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            line_x = plt.plot(f.stretch[:,2], f.stretch[:,0], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            lines_x.append(line_x)
             plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            line_y = plt.plot(f.stretch[:,2], f.stretch[:,1], '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            lines_y.append(line_y)
         
         plt.subplot(211)
         plt.plot(drift.t, drift.smooth_x, 'k-', label='X-drift', linewidth=2)
@@ -574,7 +350,7 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids, regions):
 
         plt.xlabel('Frame')
         plt.ylabel('X-Drift (nm)')
-        plt.legend()
+        legend_x = plt.legend(fancybox=True, shadow=True)
 
         plt.subplot(212)
         plt.plot(drift.t, drift.smooth_y + drift.smooth_std_y, 'k-', linewidth=1)
@@ -583,8 +359,44 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids, regions):
 
         plt.xlabel('Frame')
         plt.ylabel('Y-Drift (nm)')
-        plt.legend()
+        legend_y = plt.legend(fancybox=True, shadow=True)
 
+        lined_y = {}
+        lined_x = {}
+
+        for legline_x, origline_x, legline_y, origline_y in zip(legend_x.get_lines(), lines_x, legend_y.get_lines(), lines_y):
+            legline_x.set_picker(True)
+            lined_x[legline_x] = origline_x
+
+            legline_y.set_picker(True)
+            lined_y[legline_y] = origline_y
+
+        def on_pick_x(event):
+            try:
+                legline = event.artist
+                origline_x = lined_x[legline]
+                for o in origline_x:
+                    visible = not o.get_visible()
+                    o.set_visible(visible)
+                    legline.set_alpha(1.0 if visible else 0.2)
+                    drift_traces_plot.canvas.draw()
+            except KeyError:
+                pass
+        
+        def on_pick_y(event):
+            try:
+                legline = event.artist
+                origline_y = lined_y[legline]
+                for o in origline_y:        
+                    visible = not o.get_visible()
+                    o.set_visible(visible)
+                    legline.set_alpha(1.0 if visible else 0.2)
+                    drift_traces_plot.canvas.draw()
+            except KeyError:
+                pass
+
+        drift_traces_plot.canvas.mpl_connect('pick_event', on_pick_x)
+        drift_traces_plot.canvas.mpl_connect('pick_event', on_pick_y)
 
         plt.figure()
         plt.subplot(211)
@@ -599,24 +411,66 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids, regions):
         plt.ylabel('Y-SE (nm)')
         plt.grid(True)
 
-        plt.figure()
+        corrected_drifts_plot = plt.figure()
+
+        corr_lines_x = []
+        corr_lines_y = []
         for i, f in enumerate(fiducials):
             plt.subplot(211)
-            plt.plot(f.stretch[:,2], f.stretch[:,0]-drift.smooth_x, '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            corr_line_x = plt.plot(f.stretch[:,2], f.stretch[:,0]-drift.smooth_x, '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            corr_lines_x.append(corr_line_x)
             plt.subplot(212)
-            plt.plot(f.stretch[:,2], f.stretch[:,1]-drift.smooth_y, '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            corr_line_y = plt.plot(f.stretch[:,2], f.stretch[:,1]-drift.smooth_y, '-', linewidth=1, label="Fiducial " + str(fiducial_ids[i]), alpha=0.5)
+            corr_lines_y.append(corr_line_y)
 
         plt.subplot(211)
         plt.xlabel("Frame")
         plt.ylabel("dX (nm)")
         plt.grid(True)
-        plt.legend()
+        corr_legend_x = plt.legend(fancybox=True, shadow=True)
 
         plt.subplot(212)
         plt.xlabel("Frame")
         plt.ylabel("dY (nm)")
         plt.grid(True)
-        plt.legend()
+        corr_legend_y = plt.legend(fancybox=True, shadow=True)
+
+        corr_lined_y = {}
+        corr_lined_x = {}
+
+        for corr_legline_x, corr_origline_x, corr_legline_y, corr_origline_y in zip(corr_legend_x.get_lines(), corr_lines_x, corr_legend_y.get_lines(), corr_lines_y):
+            corr_legline_x.set_picker(True)
+            corr_lined_x[corr_legline_x] = corr_origline_x
+
+            corr_legline_y.set_picker(True)
+            corr_lined_y[corr_legline_y] = corr_origline_y
+
+        def corr_on_pick_x(event):
+            try:
+                legline = event.artist
+                corr_origline_x = corr_lined_x[legline]
+                for o in corr_origline_x:
+                    visible = not o.get_visible()
+                    o.set_visible(visible)
+                    legline.set_alpha(1.0 if visible else 0.2)
+                    corrected_drifts_plot.canvas.draw()
+            except KeyError:
+                pass
+        
+        def corr_on_pick_y(event):
+            try:
+                legline = event.artist
+                corr_origline_y = corr_lined_y[legline]
+                for o in corr_origline_y:        
+                    visible = not o.get_visible()
+                    o.set_visible(visible)
+                    legline.set_alpha(1.0 if visible else 0.2)
+                    corrected_drifts_plot.canvas.draw()
+            except KeyError:
+                pass
+
+        corrected_drifts_plot.canvas.mpl_connect('pick_event', corr_on_pick_x)
+        corrected_drifts_plot.canvas.mpl_connect('pick_event', corr_on_pick_y)
 
         plt.show()
 
@@ -635,142 +489,15 @@ def load_particles(app):
             particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
     except:
         print("Localization file not loaded")
-
-def display_image(app):
-    global image, resize, refPt, iy, ix
-
-    numbers = number_gen()
-
-    def click_and_crop(event, x, y, flags, param):
-        global refPt
-        if event == EVENT_LBUTTONDOWN:
-            refPt.append((x, y))
-
-        elif event == EVENT_LBUTTONUP:
-            refPt.append((x, y))
-            rectangler(resize, refPt[-2], refPt[-1], (0, 255, 0), 2)
-            putText(resize, str(next(numbers)), (refPt[-2][0] + 3, refPt[-2][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
-            imshow("image", resize)
-
-    # load the image, clone it, and setup the mouse callback function
-    image = imread(app.imgFileName)
-    clone = image.copy()
-    namedWindow("image")
-    iy, ix, iz = shape(image)
-    resize = resizer(image, (1260, 1080))
-    setMouseCallback("image", click_and_crop)
-    if len(refPt) > 0:
-        for i in range(0,len(refPt), 2):
-            rectangler(resize, refPt[i], refPt[i+1], (0, 255, 0), 2)
-            putText(resize, str(next(numbers)), (refPt[i][0] + 3, refPt[i+1][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
-
-    # keep looping until the 'q' key is pressed
-    while True:
-        # display the image and wait for a keypress
-        imshow("image", resize)
-        key = waitKey(1) & 0xFF
-
-        # if the 'r' key is pressed, reset the cropping region
-        if key == ord("r"):
-            remove_single_roi()
-
-        # if the 'x' key is pressed, reset all ROIs
-        if key == ord("x"):
-            remove_all_rois()
-
-        # if the 'c' key is pressed, break from the loop
-        if key == ord("c"):
-            destroyAllWindows()
-            app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
-            break
-        
-        if getWindowProperty("image",1) < 1:
-            destroyAllWindows()
-            app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
-            break
-
-def load_ROIS(app):
-    global image, resize, refPt, iy, ix
-
-    with open(app.ROIsFile, 'rb') as file:
-        regions = pickle.load(file)    
-
-    refPt = regions.refPt
-    numbers = number_gen()
-
-    def click_and_crop(event, x, y, flags, param):
-        global refPt
-        if event == EVENT_LBUTTONDOWN:
-            refPt.append((x, y))
-
-        elif event == EVENT_LBUTTONUP:
-            refPt.append((x, y))
-            rectangler(resize, refPt[-2], refPt[-1], (0, 255, 0), 2)
-            putText(resize, str(next(numbers)), (refPt[-2][0] + 3, refPt[-2][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
-            imshow("image", resize)
-
-    # load the image, clone it, and setup the mouse callback function
-    image = imread(app.imgFileName)
-    clone = image.copy()
-    namedWindow("image")
-    iy, ix, iz = shape(image)
-    resize = resizer(image, (1260, 1080))
-    setMouseCallback("image", click_and_crop)
-    if len(refPt) > 0:
-        for i in range(0,len(refPt), 2):
-            rectangler(resize, refPt[i], refPt[i+1], (0, 255, 0), 2)
-            putText(resize, str(next(numbers)), (refPt[i][0] + 3, refPt[i+1][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
-
-    # keep looping until the 'q' key is pressed
-    while True:
-        # display the image and wait for a keypress
-        imshow("image", resize)
-        key = waitKey(1) & 0xFF
-
-        # if the 'r' key is pressed, reset the cropping region
-        if key == ord("r"):
-            remove_single_roi()
-
-        # if the 'x' key is pressed, reset all ROIs
-        if key == ord("x"):
-            remove_all_rois()
-
-        # if the 'c' key is pressed, break from the loop
-        if key == ord("c"):
-            destroyAllWindows()
-            app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
-            break
-        
-        if getWindowProperty("image",1) < 1:
-            destroyAllWindows()
-            app.statusBar.setText("ROI ({}) saved".format(int(len(refPt)/2)))
-            break
-
-def remove_single_roi():
-
-    numbers = number_gen()
-    
-    global refPt, resize
-    del refPt[-2:]
-    resize = resizer(image, (1260, 1080))
-
-    for i in range(0,len(refPt), 2):
-        rectangler(resize, refPt[i], refPt[i+1], (0, 255, 0), 2)
-        putText(resize, str(next(numbers)), (refPt[i][0] + 3, refPt[i+1][1] - 3), FONT_HERSHEY_DUPLEX, 0.5, (0, 255, 0), thickness=1)
-
-def remove_all_rois():
-    global refPt, resize
-    refPt = list()
-    resize = resizer(image, (1260, 1080))
-class NeNACalculation(QThread):
-    def __init__(self, parent, app, localization, image_png, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
+class NeNACalculation():
+    def __init__(self, parent, app, image_recon, localization,  firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
         self.app = app
+        self.image_recon = image_recon
         self.localization = localization
-        self.image_png = image_png
         self.first_frame = firstFrame
         self.last_frame = lastFrame
         self.window_jump = windowJump
         self.window_size = windowSize
-        super().__init__()
+        # super().__init__()
     def run(self):
-        neNa(self.app, self.localization, self.image_png, self.first_frame, self.last_frame, self.window_jump, self.window_size)
+        neNa(self.app, self.image_recon, self.localization, self.first_frame, self.last_frame, self.window_jump, self.window_size)

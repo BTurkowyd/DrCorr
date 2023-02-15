@@ -6,17 +6,17 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-from numpy import shape
+from PyQt5 import QtCore, QtWidgets
 
 import optics
-import methods
-import rois
 
 class Ui_OPTICSanalysis(QtWidgets.QMainWindow):
-    def setupUi(self, OPTICSanalysis):
+    def setupUi(self, image, fileFormat, OPTICSanalysis):
         OPTICSanalysis.setObjectName("OPTICSanalysis")
         OPTICSanalysis.resize(400, 300)
+        self.image = image
+        self.fileFormat = fileFormat
+
         self.centralwidget = QtWidgets.QWidget(OPTICSanalysis)
         self.centralwidget.setObjectName("centralwidget")
         self.runOPTICS = QtWidgets.QPushButton(self.centralwidget)
@@ -72,10 +72,7 @@ class Ui_OPTICSanalysis(QtWidgets.QMainWindow):
         self.minPtsLabel.setText(_translate("OPTICSanalysis", "Min pts (>1)"))
 
     def run_optics(self):
-        iy, ix, iz = shape(methods.image)
-        self.regions = rois.ROIs(methods.refPt, ix, iy)
-
-        self.clusters = [optics.OPTICS_class(r, float(self.minPtsField.toPlainText()), float(self.epsilonField.toPlainText())) for r in self.regions.rois]
+        self.clusters = [optics.OPTICS_class(r, float(self.minPtsField.toPlainText()), float(self.epsilonField.toPlainText()), self.fileFormat) for r in self.image.selected_regions]
 
         for i, cluster in enumerate(self.clusters):
             cluster.run_optics()

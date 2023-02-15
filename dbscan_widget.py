@@ -6,17 +6,17 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-from numpy import shape
+from PyQt5 import QtCore, QtWidgets
 
 import dbscan
-import methods
-import rois
 
 class Ui_DBSCANanalysis(QtWidgets.QMainWindow):
-    def setupUi(self, DBSCANanalysis):
+    def setupUi(self, image, fileFormat, DBSCANanalysis):
         DBSCANanalysis.setObjectName("DBSCANanalysis")
         DBSCANanalysis.resize(400, 300)
+
+        self.image = image
+        self.fileFormat = fileFormat
         self.dbscanWidget = QtWidgets.QWidget(DBSCANanalysis)
         self.dbscanWidget.setObjectName("dbscanWidget")
         self.progressBar = QtWidgets.QProgressBar(self.dbscanWidget)
@@ -72,10 +72,7 @@ class Ui_DBSCANanalysis(QtWidgets.QMainWindow):
         self.runDBSCAN.setText(_translate("DBSCANanalysis", "Run DBSCAN"))
     
     def run_dbscan(self):
-        iy, ix, iz = shape(methods.image)
-        self.regions = rois.ROIs(methods.refPt, ix, iy)
-
-        self.clusters = [dbscan.DBSCAN_class(r, float(self.epsilonField.toPlainText()), float(self.minPtsField.toPlainText())) for r in self.regions.rois]
+        self.clusters = [dbscan.DBSCAN_class(r, float(self.epsilonField.toPlainText()), float(self.minPtsField.toPlainText()), self.fileFormat) for r in self.image.selected_regions]
 
         for i, cluster in enumerate(self.clusters):
             cluster.run_dbscan()

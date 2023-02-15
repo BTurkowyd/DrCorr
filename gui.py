@@ -6,16 +6,15 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-import numpy as np
-import matplotlib.pyplot as plt
-from particle import Particle
+from PyQt5 import QtCore, QtWidgets
 import sys
 import methods
 import dbscan_widget
+import nena_widget
 import optics_widget
 import swift_wrapper
 import bead_analyzer
+from image_reconstruction2 import ImageReconstruction
 
 
 class Ui_MainWindow(object):
@@ -69,12 +68,6 @@ class Ui_MainWindow(object):
         self.delAllROIs.clicked.connect(self.runremove_all_rois)
         self.delAllROIs.setDisabled(True)
 
-        # self.analyzeFiducials = QtWidgets.QPushButton(self.centralwidget)
-        # self.analyzeFiducials.setGeometry(QtCore.QRect(230, 320, 200, 40))
-        # self.analyzeFiducials.setObjectName("analyzeFiducials")
-        # self.analyzeFiducials.clicked.connect(self.analyze_fiducials)
-        # self.analyzeFiducials.setDisabled(True)
-
         self.beadAnalyzer = QtWidgets.QPushButton(self.centralwidget)
         self.beadAnalyzer.setGeometry(QtCore.QRect(20, 370, 200, 40))
         self.beadAnalyzer.setObjectName("analyzeFiducials")
@@ -87,12 +80,6 @@ class Ui_MainWindow(object):
         self.loadROIs.clicked.connect(self.load_ROIS)
         self.loadROIs.setDisabled(True)
 
-        # self.driftCorrection = QtWidgets.QPushButton(self.centralwidget)
-        # self.driftCorrection.setGeometry(QtCore.QRect(20, 370, 200, 40))
-        # self.driftCorrection.setObjectName("driftCorrection")
-        # self.driftCorrection.clicked.connect(self.run_dr_corr)
-        # self.driftCorrection.setDisabled(True)
-
         self.checkBox = QtWidgets.QCheckBox(self.centralwidget)
         self.checkBox.setGeometry(QtCore.QRect(30, 450, 400, 40))
         self.checkBox.setObjectName("checkBox")
@@ -101,7 +88,7 @@ class Ui_MainWindow(object):
         self.calculateNeNA.setGeometry(QtCore.QRect(20, 500, 200, 40))
         self.calculateNeNA.setObjectName("calculateNeNA")
         self.calculateNeNA.clicked.connect(self.run_nena)
-        self.calculateNeNA.setDisabled(True)
+        self.calculateNeNA.setDisabled(False)
 
         self.calculateTemporalNeNA = QtWidgets.QPushButton(self.centralwidget)
         self.calculateTemporalNeNA.setGeometry(QtCore.QRect(20, 550, 200, 40))
@@ -176,6 +163,8 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+        self.image_recon = None
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "DrCorr 3.0"))
@@ -184,15 +173,13 @@ class Ui_MainWindow(object):
         self.fiducialThreshold.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.875pt; font-weight:400; font-style:normal;\">\n"
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-weight:400; font-style:normal;\">\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">10000</p></body></html>"))
         self.fiducialThresholdLabel.setText(_translate("MainWindow", "Fiducial Threshold:"))
         self.loadData.setText(_translate("MainWindow", "Load data"))
         self.delLastROI.setText(_translate("MainWindow", "Delete last ROI"))
         self.delAllROIs.setText(_translate("MainWindow", "Delete all ROIs"))
         self.beadAnalyzer.setText(_translate("MainWindow", "Bead analyzer + Dr. corr."))
-        # self.analyzeFiducials.setText(_translate("MainWindow", "Analyze fiducials"))
-        # self.driftCorrection.setText(_translate("MainWindow", "Drift correction"))
         self.loadROIs.setText(_translate("MainWindow", "Load ROIs"))
         self.checkBox.setText(_translate("MainWindow", "No corr. terms in NeNA"))
         self.calculateNeNA.setText(_translate("MainWindow", "Calculate NeNA"))
@@ -217,9 +204,9 @@ class Ui_MainWindow(object):
         else:
             self.openFile = QtWidgets.QWidget()
             self.locfileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the localization file", "","CSV Files (*.csv) ;;All Files (*)")
-        self.imgFileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the image reconstruction", "","PNG Files (*.PNG) ;; All Files (*)")
+        # self.imgFileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the image reconstruction", "","PNG Files (*.PNG) ;; All Files (*)")
 
-        if self.locfileName and self.imgFileName:
+        if self.locfileName:
             print(self.locfileName)
             methods.refPt = []
             methods.load_particles(self)
@@ -241,22 +228,14 @@ class Ui_MainWindow(object):
     def close_program(self):
         sys.exit(self)
 
-    def run_dr_corr(self):
-        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-        self.drCorr = methods.dr_corr(self)
-        # self.drCorr.start()
-
     def analyze_beads(self):
+        print(self.fidu_intensity)
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
         self.anal_beads = bead_analyzer.Ui_BeadAnalyzer()
-        self.anal_beads.setupUi(self.anal_beads, self)
+        self.image_recon.create_fiducials(self.fidu_intensity)
+        self.anal_beads.setupUi(self.anal_beads, self, self.image_recon.selections)
         self.anal_beads.show()
 
-    def analyze_fiducials(self):
-        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-        methods.analyze_fiducials(self)
-
-    
     def load_ROIS(self):
         try:
             self.openROIs = QtWidgets.QWidget()
@@ -267,37 +246,45 @@ class Ui_MainWindow(object):
         except:
             print("There is no ROIs")
 
-
     def run_remove_single_roi(self):
         try:
-            methods.remove_single_roi()
+            self.image_recon.del_last_selection()
         except:
-            print("There is no ROIs")
+            print("There are no ROIs")
 
     def runremove_all_rois(self):
         try:
-            methods.remove_all_rois()
+            self.image_recon.del_all_selections()
         except:
-            print("There is no ROIs")
+            print("There are no ROIs")
     
     def run_display_image(self):
         self.imageDisplay.setDisabled(True)
-        methods.display_image(self)
+        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
+        self.image_recon = ImageReconstruction(self.locfileName, self.fidu_intensity, self.inputFormat.currentText())
         self.imageDisplay.setDisabled(False)
     
     def run_nena(self):
-        self.runNena = methods.NeNACalculation(self, self, self.locfileName, self.imgFileName)
-        self.runNena.start()
+        try:
+            self.image_recon.create_fiducials(0)
+            for s in self.image_recon.selections:
+                self.nena = nena_widget.Ui_NeNA()
+                self.nena.setupUi(self.image_recon, self.inputFormat.currentText(), self.nena)
+                self.nena.show()
+                self.runNena = methods.NeNACalculation(self, self, self.image_recon, self.locfileName)
+            # self.runNena.run()
+        except AttributeError:
+            print('Please select ROIs.')
         # methods.neNa(self, self.locfileName, self.imgFileName)
     
     def run_DBSCAN(self):
         self.dbscan = dbscan_widget.Ui_DBSCANanalysis()
-        self.dbscan.setupUi(self.dbscan)
+        self.dbscan.setupUi(self.image_recon, self.inputFormat.currentText(), self.dbscan)
         self.dbscan.show()
 
     def run_OPTICS(self):
         self.optics = optics_widget.Ui_OPTICSanalysis()
-        self.optics.setupUi(self.optics)
+        self.optics.setupUi(self.image_recon, self.inputFormat.currentText() ,self.optics)
         self.optics.show()
 
     def run_swift(self):
