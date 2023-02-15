@@ -88,7 +88,7 @@ class Ui_MainWindow(object):
         self.calculateNeNA.setGeometry(QtCore.QRect(20, 500, 200, 40))
         self.calculateNeNA.setObjectName("calculateNeNA")
         self.calculateNeNA.clicked.connect(self.run_nena)
-        self.calculateNeNA.setDisabled(True)
+        self.calculateNeNA.setDisabled(False)
 
         self.calculateTemporalNeNA = QtWidgets.QPushButton(self.centralwidget)
         self.calculateTemporalNeNA.setGeometry(QtCore.QRect(20, 550, 200, 40))
