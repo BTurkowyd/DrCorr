@@ -84,5 +84,5 @@ class Ui_NeNA(QtWidgets.QMainWindow):
     
     def set_defaults(self):
         self.lowerBoundValue.setPlainText("10")
-        self.initialValue.setPlainText("10")
-        self.upperBoundValue.setPlainText("10")
+        self.initialValue.setPlainText("25")
+        self.upperBoundValue.setPlainText("100")
