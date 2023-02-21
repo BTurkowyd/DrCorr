@@ -267,11 +267,11 @@ class Ui_MainWindow(object):
     def run_nena(self):
         try:
             self.image_recon.create_fiducials(0)
-            for s in self.image_recon.selections:
+            for i, selection in enumerate(self.image_recon.selections):
                 self.nena = nena_widget.Ui_NeNA()
-                self.nena.setupUi(self.image_recon, self.inputFormat.currentText(), self.nena)
+                self.nena.setupUi(selection, self.nena, i+1)
                 self.nena.show()
-                self.runNena = methods.NeNACalculation(self, self, self.image_recon, self.locfileName)
+                # self.runNena = methods.NeNACalculation(self, self, self.image_recon, self.locfileName)
             # self.runNena.run()
         except AttributeError:
             print('Please select ROIs.')

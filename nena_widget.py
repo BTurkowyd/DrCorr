@@ -4,11 +4,10 @@ from PyQt5 import QtCore, QtWidgets
 import optics
 
 class Ui_NeNA(QtWidgets.QMainWindow):
-    def setupUi(self, image, fileFormat, NeNAanalysis):
+    def setupUi(self, selection, NeNAanalysis, count):
         NeNAanalysis.setObjectName("NeNAanalysis")
         NeNAanalysis.resize(300, 140)
-        self.image = image
-        self.fileFormat = fileFormat
+        self.selection = selection
 
         self.centralwidget = QtWidgets.QWidget(NeNAanalysis)
         self.centralwidget.setObjectName("centralwidget")
@@ -47,12 +46,14 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.statusbar.setObjectName("statusbar")
         NeNAanalysis.setStatusBar(self.statusbar)
 
-        self.retranslateUi(NeNAanalysis)
+        self.retranslateUi(NeNAanalysis, count)
         QtCore.QMetaObject.connectSlotsByName(NeNAanalysis)
+        print(self.selection.fiducial)
+        # check in methods.calc_NeNA how to procedd further
 
-    def retranslateUi(self, NeNAanalysis):
+    def retranslateUi(self, NeNAanalysis, count):
         _translate = QtCore.QCoreApplication.translate
-        NeNAanalysis.setWindowTitle(_translate("NeNAanalysis", "NeNA analysis"))
+        NeNAanalysis.setWindowTitle(_translate("NeNAanalysis", "NeNA analysis {}".format(count)))
         self.runNeNA.setText(_translate("NeNAanalysis", "Compute NeNA"))
         self.setDefaults.setText(_translate("NeNAanalysis", "Reset Values"))
         self.lowerBoundLabel.setText(_translate("NeNAanalysis", "Lower Bound"))
