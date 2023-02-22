@@ -170,11 +170,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "DrCorr 3.0"))
         self.inputFormat.setItemText(0, _translate("MainWindow", "RapidSTORM"))
         self.inputFormat.setItemText(1, _translate("MainWindow", "ThunderSTORM"))
-        self.fiducialThreshold.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">10000</p></body></html>"))
+        self.fiducialThreshold.setHtml(_translate("MainWindow", "10000"))
         self.fiducialThresholdLabel.setText(_translate("MainWindow", "Fiducial Threshold:"))
         self.loadData.setText(_translate("MainWindow", "Load data"))
         self.delLastROI.setText(_translate("MainWindow", "Delete last ROI"))
@@ -267,9 +263,9 @@ class Ui_MainWindow(object):
     def run_nena(self):
         try:
             self.image_recon.create_fiducials(0)
-            for i, selection in enumerate(self.image_recon.selections):
+            for i, sele in enumerate(self.image_recon.selections):
                 self.nena = nena_widget.Ui_NeNA()
-                self.nena.setupUi(selection, self.nena, i+1)
+                self.nena.setupUi(sele, self.nena, i+1)
                 self.nena.show()
                 # self.runNena = methods.NeNACalculation(self, self, self.image_recon, self.locfileName)
             # self.runNena.run()

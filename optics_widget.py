@@ -59,16 +59,8 @@ class Ui_OPTICSanalysis(QtWidgets.QMainWindow):
         OPTICSanalysis.setWindowTitle(_translate("OPTICSanalysis", "OPTICS analysis"))
         self.runOPTICS.setText(_translate("OPTICSanalysis", "Run OPTICS"))
         self.epsilonLabel.setText(_translate("OPTICSanalysis", "Upper limit (nm)"))
-        self.minPtsField.setHtml(_translate("OPTICSanalysis", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.875pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">10</p></body></html>"))
-        self.epsilonField.setHtml(_translate("OPTICSanalysis", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.875pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">1000</p></body></html>"))
+        self.minPtsField.setHtml(_translate("OPTICSanalysis", "10"))
+        self.epsilonField.setHtml(_translate("OPTICSanalysis", "1000"))
         self.minPtsLabel.setText(_translate("OPTICSanalysis", "Min pts (>1)"))
 
     def run_optics(self):
