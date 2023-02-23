@@ -31,7 +31,7 @@ def number_gen():
         yield i
         i += 1
 
-def dr_corr_2(app, fiducials, fiducial_ids):
+def dr_corr_2(app, fiducials, particles, fiducial_ids):
         output_folder = os.path.dirname(os.path.realpath(app.locfileName))
 
         plt.savefig(os.path.join(output_folder, 'selected_rois.png'))
@@ -62,6 +62,7 @@ def dr_corr_2(app, fiducials, fiducial_ids):
         app.progressBar.setValue(k)
         app.statusBar.setText("Applying the drift correction")
 
+        print("particles: " + str(len(particles)))
         for p in particles:
             p.load_drift(drift)
             p.apply_drift()
@@ -332,16 +333,3 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids):
         corrected_drifts_plot.canvas.mpl_connect('pick_event', corr_on_pick_y)
 
         plt.show()
-
-def load_particles(app):
-    try:
-        global image, resize, refPt, particles
-
-        if app.inputFormat.currentText() == "RapidSTORM":
-            loc = loadtxt(app.locfileName)
-            particles = [Particle(p[0], p[1], p[2], p[3]) for p in loc]
-        else:
-            loc = pd.read_csv(app.locfileName)
-            particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
-    except:
-        print("Localization file not loaded")

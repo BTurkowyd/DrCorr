@@ -15,6 +15,15 @@ import optics_widget
 import swift_wrapper
 import bead_analyzer
 from image_reconstruction2 import ImageReconstruction
+import numpy as np
+import pandas as pd
+
+from particle import Particle
+
+refPt = list()
+resize = None
+image = None
+particles = []
 
 
 class Ui_MainWindow(object):
@@ -65,7 +74,7 @@ class Ui_MainWindow(object):
         self.delAllROIs = QtWidgets.QPushButton(self.centralwidget)
         self.delAllROIs.setGeometry(QtCore.QRect(20, 320, 200, 40))
         self.delAllROIs.setObjectName("delAllROIs")
-        self.delAllROIs.clicked.connect(self.runremove_all_rois)
+        self.delAllROIs.clicked.connect(self.run_remove_all_rois)
         self.delAllROIs.setDisabled(True)
 
         self.beadAnalyzer = QtWidgets.QPushButton(self.centralwidget)
@@ -123,10 +132,10 @@ class Ui_MainWindow(object):
         self.statusBar = QtWidgets.QLabel(self.centralwidget)
         self.statusBar.setGeometry(QtCore.QRect(150, 750, 400, 40))
         self.statusBar.setAlignment(QtCore.Qt.AlignCenter)
-        self.statusBar.setObjectName("statusBar")  
+        self.statusBar.setObjectName("statusBar")
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)      
+        MainWindow.setStatusBar(self.statusbar)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -164,6 +173,7 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         self.image_recon = None
+        self.particles = []
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -193,6 +203,19 @@ class Ui_MainWindow(object):
         self.actionBefore_and_after_correction.setText(_translate("MainWindow", "Before and after correction"))
         self.actionRun_SWIFT.setText(_translate("MainWindow", "Run SWIFT"))
 
+    def load_particles(self):
+        try:
+            global image, resize, refPt, particles
+
+            if self.inputFormat.currentText() == "RapidSTORM":
+                loc = np.loadtxt(self.locfileName)
+                self.particles = [Particle(p[0], p[1], p[2], p[3]) for p in loc]
+            else:
+                loc = pd.read_csv(self.locfileName)
+                self.particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
+        except:
+            print("Localization file not loaded")
+
     def getFiles(self):
         if self.inputFormat.currentText() == "RapidSTORM":
             self.openFile = QtWidgets.QWidget()
@@ -205,7 +228,7 @@ class Ui_MainWindow(object):
         if self.locfileName:
             print(self.locfileName)
             methods.refPt = []
-            methods.load_particles(self)
+            self.load_particles()
             self.imageDisplay.setDisabled(False)
             self.delLastROI.setDisabled(False)
             self.delAllROIs.setDisabled(False)
@@ -229,7 +252,7 @@ class Ui_MainWindow(object):
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
         self.anal_beads = bead_analyzer.Ui_BeadAnalyzer()
         self.image_recon.create_fiducials(self.fidu_intensity)
-        self.anal_beads.setupUi(self.anal_beads, self, self.image_recon.selections)
+        self.anal_beads.setupUi(self.anal_beads, self, self.image_recon.selections, self.particles)
         self.anal_beads.show()
 
     def load_ROIS(self):
@@ -248,18 +271,18 @@ class Ui_MainWindow(object):
         except:
             print("There are no ROIs")
 
-    def runremove_all_rois(self):
+    def run_remove_all_rois(self):
         try:
             self.image_recon.del_all_selections()
         except:
             print("There are no ROIs")
-    
+
     def run_display_image(self):
         self.imageDisplay.setDisabled(True)
         self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
         self.image_recon = ImageReconstruction(self.locfileName, self.fidu_intensity, self.inputFormat.currentText())
         self.imageDisplay.setDisabled(False)
-    
+
     def run_nena(self):
         try:
             self.image_recon.create_fiducials(0)
@@ -272,7 +295,7 @@ class Ui_MainWindow(object):
         except AttributeError:
             print('Please select ROIs.')
         # methods.neNa(self, self.locfileName, self.imgFileName)
-    
+
     def run_DBSCAN(self):
         self.dbscan = dbscan_widget.Ui_DBSCANanalysis()
         self.dbscan.setupUi(self.image_recon, self.inputFormat.currentText(), self.dbscan)
