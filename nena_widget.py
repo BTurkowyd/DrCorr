@@ -130,8 +130,8 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         return areaF
 
     def cFunc_2dCorr(self, x, dSMLM, xc, w, A2, A1, A3):
-        #x is the value which you wanna get out of it
-        y = (x / (2 * dSMLM * dSMLM)) * np.exp((-1) * x * x / (4 * dSMLM * dSMLM)) * A1 + (A2 / (w * np.sqrt(np.pi / 2))) * np.exp(-2 * ((x - xc) / w) * ((x - xc) / w)) + A3 * x
+        #dSMLM is the value which you wanna get out of it
+        y = (x / (2 * dSMLM * dSMLM)) * np.exp((-1) * x * x / (4 * dSMLM * dSMLM)) * A1 + (A2 / (w * np.sqrt(np.pi * 2))) * np.exp(-0.5 * ((x - xc) / w) * ((x - xc) / w)) + A3 * x
         return y
     
     def CFit_resultsCorr(self, x, y, initialValue, lowerBound, upperBound):

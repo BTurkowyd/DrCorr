@@ -31,139 +31,6 @@ def number_gen():
         yield i
         i += 1
 
-def min_dist(point, locs):
-    d = sqrt(np.square(locs[:, 0] - point[0]) + np.square(locs[:, 1] - point[1]))
-    return np.min(d)
-
-
-def Area(r, y):
-    Areaf = abs(np.trapz(y, r))
-    return Areaf
-
-def plot_NeNA(NeNA_dist, localization, k):
-    Min = 0
-    Max = 150
-    Int = 1
-    Inc = (Max - Min) / Int
-    x = np.arange(Min, Max, Int, dtype='float')
-    y = np.histogram(NeNA_dist, bins=int(Inc), range=(Min, Max), density=True)[0]
-    acc, acc_err = CFit_resultsCorr(x, y)
-    NeNA_func = CFunc2dCorr(x, acc[0], acc[1], acc[2], acc[3], acc[4], acc[5])
-    name = 'NeNA_loc_{0}.pdf'.format(k + 1)
-    output_folder = os.path.dirname(os.path.realpath(localization))
-    f, axarr = plt.subplots(1, sharex=False)
-    axarr.bar(x, y, color='gray', edgecolor='black', width=Int)
-    axarr.plot(x, NeNA_func, 'b')
-    axarr.set_xlim([Min, Max])
-    axarr.set_xlabel('loc_acc [nm]')
-    axarr.set_ylabel('Intensity [a.u.]')
-    # plt.savefig(str(output_folder) + "\\" + name, format='pdf')
-    plt.savefig(os.path.join(output_folder, name), format='pdf')
-    plt.close()
-    return acc, acc_err
-
-def CFunc2dCorr(r, a, rc, w, F, A, O):
-    y = (r / (2 * a * a)) * np.exp((-1) * r * r / (4 * a * a)) * A + (F / (w * np.sqrt(np.pi / 2))) * np.exp(
-        -2 * ((r - rc) / w) * ((r - rc) / w)) + O * r
-    return y
-
-def CFit_resultsCorr(r, y):
-    A = Area(r, y)
-    p0 = np.array([10.0, 15, 100, (A / 2), (A / 2), ((y[98] / 200))])
-    popt, pcov = curve_fit(CFunc2dCorr, r, y, p0)
-    return popt, pcov
-
-def calc_NeNA(selections, localization, k, counting=0, nenaList=[]):
-    selections = np.asarray(selections.fiducial)
-    print(selections)
-    max_frame = np.max(selections[:,2]) # this is only for rapidstorm format, not thunderstorm! You have to fix it!!!
-    print(max_frame)
-    length = shape(selections)[0]
-    frames = zeros([length, 2])
-    frames[:, 1] = selections[:, 2]
-    tree = spatial.KDTree(frames[:, 0:2])
-    d = zeros([length, 1])
-    p = -1
-    for i in range(length - 1):
-        o = selections[i, 2]
-        # j muss angeben,ob nächster Frame existent ist
-        j = selections[i + 1, 2] - selections[i, 2]
-        if selections[i, 2] < max_frame and o == p:
-            d[i] = min_dist(selections[i, 0:3], temp_locs)
-            p = o
-        elif selections[i, 2] < max_frame and o > p:
-            temp_locs = selections[tree.query_ball_point([0, o + 1], 0.1), 0:2]
-            if np.shape(temp_locs)[0] > 0:
-                d[i] = min_dist(selections[i, 0:3], temp_locs)
-                p = o
-        elif selections[i, 2] == max_frame:
-            break
-    print('\n')
-    idx = d > 0
-    NeNA_dist = d[idx]
-    NeNA_acc, NeNA_err = plot_NeNA(NeNA_dist, localization, k)
-    output_folder = os.path.dirname(os.path.realpath(localization))
-    hd = "the average localization accuracy by NeNA is at %.1f [nm]" % (float(NeNA_acc[0]))
-    outname = 'NeNA_loc_{0}_{1}.txt'.format(k + 1, counting)
-    np.savetxt(os.path.join(output_folder, outname), NeNA_dist, fmt='%.5e', delimiter='   ', header=hd, comments='# ')
-    nenaList.append(float(NeNA_acc[0]))
-    return float(NeNA_acc[0])
-
-
-def neNa(app, image_recon, localization, firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
-    # try:
-        # global image, resize, refPt
-
-        # iy, ix, iz = shape(image)
-
-        # if app.inputFormat.currentText() == "RapidSTORM":
-        #     loc = loadtxt(image_recon)
-        # else:
-        #     loc = pd.read_csv(app.locfileName)
-
-        # output_folder = os.path.dirname(os.path.realpath(localization))
-        output_folder = os.path.dirname(os.path.realpath(app.locfileName))
-
-        # regions = ROIs(refPt, ix, iy)
-        # nena_regions = [NeNA(r, firstFrame, lastFrame, windowJump, windowSize, app.inputFormat.currentText()) for r in regions.rois]
-
-        # app.statusBar.setText("Calculating NeNA values")
-
-        # for n in nena_regions:
-        #     n.nena_roi(loc, firstFrame, lastFrame, windowJump, windowSize)
-
-        k = 0
-        app.progressBar.setMaximum(len(image_recon.selections))
-        app.progressBar.setValue(k)
-
-        nena_values = []
-        for i in range(len(image_recon.selections)):
-            if (windowJump or windowSize) == 0:
-                nena_values.append(calc_NeNA(image_recon.selections[i], localization, i))
-
-            else:
-                counting = 0
-                nenaList = []
-                nenaSeries = []
-                for j in range(len(image_recon.selections)):
-                    calc_NeNA(image_recon.selections, image_recon, i, counting, nenaList)
-                    counting += 1
-                np.savetxt(os.path.join(output_folder, 'NeNA_summary_', str(i), '.txt'), nenaList, fmt='%.5e')
-                # np.savetxt(str(output_folder) + "\\NeNA_summary_" + str(i) + ".txt", nenaList, fmt='%.5e')
-                nenaSeries.append(nenaList)
-            
-
-            k += 1
-            app.progressBar.setValue(k)
-        np.savetxt(os.path.join(output_folder, 'NeNA_summary_table.txt'), nena_values, fmt='%.2f')
-        # np.savetxt(str(output_folder) + "\\NeNA_summary_table.txt", nena_values, fmt='%.2f')
-
-        app.statusBar.setText("NeNA calculated!")
-    # except:
-    #     print("No ROIs selected")
-
-
-
 def dr_corr_2(app, fiducials, fiducial_ids):
         output_folder = os.path.dirname(os.path.realpath(app.locfileName))
 
@@ -301,18 +168,10 @@ def dr_corr_2(app, fiducials, fiducial_ids):
 def analyze_fiducials_2(app, fiducials, fiducial_ids):
         plt.style.use('classic')
 
-    # try:
-        # global image, resize, refPt
-
-        # imwrite(app.locfileName.split('.')[0] + "selected_ROIs.png", resize)
-
         if app.inputFormat.currentText() == "RapidSTORM":
             loc = loadtxt(app.locfileName)
         else:
             loc = pd.read_csv(app.locfileName)
-
-        # with open(app.locfileName.split('.')[0] + '\\rois.roi', 'wb') as file:
-        #     pickle.dump(regions, file)
 
         k = 0
         app.progressBar.setMaximum(len(fiducials))
@@ -474,9 +333,6 @@ def analyze_fiducials_2(app, fiducials, fiducial_ids):
 
         plt.show()
 
-    # except:
-    #     pass
-
 def load_particles(app):
     try:
         global image, resize, refPt, particles
@@ -489,15 +345,3 @@ def load_particles(app):
             particles = [Particle(p[2], p[3], p[1], p[5], p[0], p[4], p[6], p[7], p[8], p[9]) for p in loc.values]
     except:
         print("Localization file not loaded")
-class NeNACalculation():
-    def __init__(self, parent, app, image_recon, localization,  firstFrame=0, lastFrame=0, windowJump=0, windowSize=0):
-        self.app = app
-        self.image_recon = image_recon
-        self.localization = localization
-        self.first_frame = firstFrame
-        self.last_frame = lastFrame
-        self.window_jump = windowJump
-        self.window_size = windowSize
-        # super().__init__()
-    def run(self):
-        neNa(self.app, self.image_recon, self.localization, self.first_frame, self.last_frame, self.window_jump, self.window_size)
