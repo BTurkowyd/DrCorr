@@ -11,12 +11,13 @@ from PyQt5 import QtCore, QtWidgets
 import dbscan
 
 class Ui_DBSCANanalysis(QtWidgets.QMainWindow):
-    def setupUi(self, image, fileFormat, DBSCANanalysis):
+    def setupUi(self, image, particles, fileFormat, DBSCANanalysis):
         DBSCANanalysis.setObjectName("DBSCANanalysis")
         DBSCANanalysis.resize(400, 300)
 
         self.image = image
         self.fileFormat = fileFormat
+        self.particles = particles
         self.dbscanWidget = QtWidgets.QWidget(DBSCANanalysis)
         self.dbscanWidget.setObjectName("dbscanWidget")
         self.progressBar = QtWidgets.QProgressBar(self.dbscanWidget)
@@ -64,7 +65,7 @@ class Ui_DBSCANanalysis(QtWidgets.QMainWindow):
         self.runDBSCAN.setText(_translate("DBSCANanalysis", "Run DBSCAN"))
     
     def run_dbscan(self):
-        self.clusters = [dbscan.DBSCAN_class(r, float(self.epsilonField.toPlainText()), float(self.minPtsField.toPlainText()), self.fileFormat) for r in self.image.selected_regions]
+        self.clusters = [dbscan.DBSCAN_class(r, self.particles, float(self.epsilonField.toPlainText()), float(self.minPtsField.toPlainText()), self.fileFormat) for r in self.image.selected_regions]
 
         for i, cluster in enumerate(self.clusters):
             cluster.run_dbscan()

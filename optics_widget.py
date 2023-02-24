@@ -11,11 +11,12 @@ from PyQt5 import QtCore, QtWidgets
 import optics
 
 class Ui_OPTICSanalysis(QtWidgets.QMainWindow):
-    def setupUi(self, image, fileFormat, OPTICSanalysis):
+    def setupUi(self, image, particles, fileFormat, OPTICSanalysis):
         OPTICSanalysis.setObjectName("OPTICSanalysis")
         OPTICSanalysis.resize(400, 300)
         self.image = image
         self.fileFormat = fileFormat
+        self.particles = particles
 
         self.centralwidget = QtWidgets.QWidget(OPTICSanalysis)
         self.centralwidget.setObjectName("centralwidget")
@@ -64,7 +65,7 @@ class Ui_OPTICSanalysis(QtWidgets.QMainWindow):
         self.minPtsLabel.setText(_translate("OPTICSanalysis", "Min pts (>1)"))
 
     def run_optics(self):
-        self.clusters = [optics.OPTICS_class(r, float(self.minPtsField.toPlainText()), float(self.epsilonField.toPlainText()), self.fileFormat) for r in self.image.selected_regions]
+        self.clusters = [optics.OPTICS_class(r, self.particles, float(self.minPtsField.toPlainText()), float(self.epsilonField.toPlainText()), self.fileFormat) for r in self.image.selected_regions]
 
         for i, cluster in enumerate(self.clusters):
             cluster.run_optics()

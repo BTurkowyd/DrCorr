@@ -8,7 +8,6 @@
 
 from PyQt5 import QtCore, QtWidgets
 import sys
-import methods
 import dbscan_widget
 import nena_widget
 import optics_widget
@@ -227,7 +226,6 @@ class Ui_MainWindow(object):
 
         if self.locfileName:
             print(self.locfileName)
-            methods.refPt = []
             self.load_particles()
             self.imageDisplay.setDisabled(False)
             self.delLastROI.setDisabled(False)
@@ -248,20 +246,19 @@ class Ui_MainWindow(object):
         sys.exit(self)
 
     def analyze_beads(self):
-        print(self.fidu_intensity)
-        self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
-        self.anal_beads = bead_analyzer.Ui_BeadAnalyzer()
-        self.image_recon.create_fiducials(self.fidu_intensity)
-        self.anal_beads.setupUi(self.anal_beads, self, self.image_recon.selections, self.particles)
-        self.anal_beads.show()
+        try:
+            self.fidu_intensity = float(self.fiducialThreshold.toPlainText())
+            self.anal_beads = bead_analyzer.Ui_BeadAnalyzer()
+            self.image_recon.create_fiducials(self.fidu_intensity)
+            self.anal_beads.setupUi(self.anal_beads, self, self.image_recon.selections, self.particles)
+            self.anal_beads.show()
+        except AttributeError:
+            print("No fiducials selected")
 
     def load_ROIS(self):
         try:
             self.openROIs = QtWidgets.QWidget()
             self.ROIsFile, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the ROIs file", "","ROI Files (*.roi) ;;All Files (*)")
-
-            methods.load_ROIS(self)
-
         except:
             print("There is no ROIs")
 
@@ -298,12 +295,12 @@ class Ui_MainWindow(object):
 
     def run_DBSCAN(self):
         self.dbscan = dbscan_widget.Ui_DBSCANanalysis()
-        self.dbscan.setupUi(self.image_recon, self.inputFormat.currentText(), self.dbscan)
+        self.dbscan.setupUi(self.image_recon, self.particles, self.inputFormat.currentText(), self.dbscan)
         self.dbscan.show()
 
     def run_OPTICS(self):
         self.optics = optics_widget.Ui_OPTICSanalysis()
-        self.optics.setupUi(self.image_recon, self.inputFormat.currentText() ,self.optics)
+        self.optics.setupUi(self.image_recon, self.particles, self.inputFormat.currentText() ,self.optics)
         self.optics.show()
 
     def run_swift(self):

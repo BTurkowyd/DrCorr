@@ -1,16 +1,15 @@
 from sklearn.cluster import DBSCAN
 import numpy as np
 
-import methods
-
 class DBSCAN_class:
-    def __init__(self, rois, eps, minPts, fileFormat="RapidSTORM"):
+    def __init__(self, rois, particles, eps, minPts, fileFormat="RapidSTORM"):
         self.eps = eps
         self.minPts = minPts
         self.db_rois = []
         self.particle_ids = []
         self.rois = rois
         self.fileFormat = fileFormat
+        self.particles = particles
     
     def run_dbscan(self):
         if self.fileFormat == "RapidSTORM":
@@ -28,10 +27,10 @@ class DBSCAN_class:
         #         self.particle_ids.append(i)
 
         self.db_rois = np.asarray(self.db_rois)
-        self.clustering = DBSCAN(self.eps, self.minPts).fit(self.db_rois)
+        self.clustering = DBSCAN(eps=self.eps,min_samples=self.minPts).fit(self.db_rois)
 
         for ids, point in zip(self.particle_ids, self.clustering.labels_):
-            methods.particles[ids].dbscan = point
+            self.particles[ids].dbscan = point
 
     def write(self, order):
         with open("DBSCAN_roi" + str(order) + ".txt", "w") as f:

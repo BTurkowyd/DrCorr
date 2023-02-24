@@ -1,10 +1,8 @@
 from sklearn.cluster import OPTICS
 import numpy as np
 
-import methods
-
 class OPTICS_class:
-    def __init__(self, rois, minPts, max_eps, fileFormat):
+    def __init__(self, rois, particles, minPts, max_eps, fileFormat):
         self.max_eps = max_eps
         self.minPts = minPts
         self.optics_rois = []
@@ -12,6 +10,7 @@ class OPTICS_class:
         self.order = []
         self.rois = rois
         self.fileFormat = fileFormat
+        self.particles = particles
 
     def run_optics(self):
         if self.fileFormat == "RapidSTORM":
@@ -32,11 +31,11 @@ class OPTICS_class:
         self.clustering = OPTICS(int(self.minPts), self.max_eps).fit(self.optics_rois)
 
         for ids, label, rd in zip(self.particle_ids, self.clustering.labels_, self.clustering.reachability_):
-            methods.particles[ids].optics = label
-            methods.particles[ids].optics_rd = rd
+            self.particles[ids].optics = label
+            self.particles[ids].optics_rd = rd
         
         for order in self.clustering.ordering_:
-            self.order.append(methods.particles[order].optics_rd)
+            self.order.append(self.particles[order].optics_rd)
 
         self.core_ordered = self.clustering.reachability_[self.clustering.ordering_]
 
