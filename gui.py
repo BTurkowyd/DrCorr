@@ -283,10 +283,13 @@ class Ui_MainWindow(object):
     def run_nena(self):
         try:
             self.image_recon.create_fiducials(0)
-            for i, sele in enumerate(self.image_recon.selections):
-                self.nena = nena_widget.Ui_NeNA()
-                self.nena.setupUi(sele, self.nena, i+1)
-                self.nena.show()
+            self.nena = nena_widget.Ui_NeNA()
+            self.nena.setupUi(self.image_recon.selections, self.nena, 1)
+            self.nena.show()
+            # for i, sele in enumerate(self.image_recon.selections):
+            #     self.nena = nena_widget.Ui_NeNA()
+            #     self.nena.setupUi(sele, self.nena, i+1)
+            #     self.nena.show()
                 # self.runNena = methods.NeNACalculation(self, self, self.image_recon, self.locfileName)
             # self.runNena.run()
         except AttributeError:
