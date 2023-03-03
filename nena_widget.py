@@ -43,10 +43,13 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         
         # plt.close()
         plt.style.use('default')
+        plt.rcParams['font.family'] = 'Arial'
         self.x = np.arange(self.minDist, self.maxDist, self.int, dtype='float')
         self.y = np.histogram(self.NeNADist, bins=int(self.inc), range=(self.minDist, self.maxDist), density=True)[0]
         plt.figure()
         plt.bar(self.x, self.y, color='gray', edgecolor='black')
+        plt.xlabel("Distance (nm)")
+        plt.ylabel("Probability")
         plt.show(block=False)
 
         self.centralwidget = QtWidgets.QWidget(NeNAanalysis)
@@ -105,15 +108,19 @@ class Ui_NeNA(QtWidgets.QMainWindow):
 
     def compute_nena(self):
         # plt.close()
-        plt.style.use('default')
         self.x = np.arange(self.minDist, self.maxDist, self.int, dtype='float')
         self.y = np.histogram(self.NeNADist, bins=int(self.inc), range=(self.minDist, self.maxDist), density=True)[0]
         self.acc, self.acc_err = self.CFit_resultsCorr(self.x, self.y, self.initialValue.toPlainText(), self.lowerBoundValue.toPlainText(), self.upperBoundValue.toPlainText())
         print(np.round(self.acc[0],2))
         self.nenaFit = self.cFunc_2dCorr(self.x, *self.acc)
+        plt.style.use('default')
+        plt.rcParams['font.family'] = 'Arial'
         plt.figure()
         plt.bar(self.x, self.y, color='gray', edgecolor='black')
         plt.plot(self.x, self.nenaFit, color='red')
+        plt.xlabel("Distance (nm)")
+        plt.ylabel("Probability")
+        plt.title('NeNA: {} nm'.format(np.round(self.acc[0],2)))
         plt.show(block=False)
     
     def set_defaults(self):
