@@ -8,19 +8,22 @@ import matplotlib.pyplot as plt
 class Ui_NeNA(QtWidgets.QMainWindow):
     def setupUi(self, selection, NeNAanalysis, count):
         NeNAanalysis.setObjectName("NeNAanalysis")
-        NeNAanalysis.resize(500, 140)
-        self.selection = selection
-        self.number_of_selections = len(self.selection)
-
+        self.selections = selection
+        self.number_of_selections = len(self.selections)
+        NeNAanalysis.resize(500, 90 + 50*self.number_of_selections)
         self.centralwidget = QtWidgets.QWidget(NeNAanalysis)
         self.centralwidget.setObjectName("centralwidget")
-        self.prepare_NNs(self.selection[0])
+        self.prepare_NNs()
 
         self.runNeNA = []
         self.setDefaults = []
         self.lowerBoundValue = []
         self.initialValue = []
         self.upperBoundValue = []
+
+        self.minDist = 0
+        self.maxDist = 100
+        self.int = 1
 
         for i in range(self.number_of_selections):
             self.lowerBoundValue.append(QtWidgets.QTextEdit(self.centralwidget))
@@ -79,6 +82,7 @@ class Ui_NeNA(QtWidgets.QMainWindow):
             self.runNeNA[i].setText(_translate("NeNAanalysis", "Compute NeNA"))
             self.setDefaults[i].setText(_translate("NeNAanalysis", "Set Defaults"))
             self.lowerBoundValue[i].setHtml(_translate("NeNAanalysis", "3"))
+            # self.x self.y have to be lists: each object in the list is each fiducial
             self.initialValue[i].setHtml(_translate("NeNAanalysis", "{}".format(int(self.x[np.argmax(self.y)]))))
             self.upperBoundValue[i].setHtml(_translate("NeNAanalysis", "100"))
 
@@ -126,44 +130,43 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         popt, pcov = curve_fit(self.cFunc_2dCorr, x, y, p0=p0, bounds=bounds)
         return popt, pcov
     
-    def prepare_NNs(self, selection):
-        self.selection = selection
-        self.selectionArray = np.asarray(self.selection.fiducial)
-        self.maxFrame = np.max(self.selectionArray[:,2])
-        self.length = np.shape(self.selectionArray)[0]
-        self.frames = np.zeros([self.length, 2])
-        self.frames[:, 1] = self.selectionArray[:, 2]
-        self.tree = spatial.KDTree(self.frames[:, 0:2])
-        self.d = np.zeros([self.length, 1])
-        self.p = -1
-        for i in range(self.length - 1):
-            self.o = self.selectionArray[i, 2]
-            # j muss angeben,ob nächster Frame existent ist
-            self.j = self.selectionArray[i + 1, 2] - self.selectionArray[i, 2]
-            if self.selectionArray[i, 2] < self.maxFrame and self.o == self.p:
-                self.d[i] = self.min_dist(self.selectionArray[i, 0:3], self.tempLocs)
-                self.p = self.o
-            elif self.selectionArray[i, 2] < self.maxFrame and self.o > self.p:
-                self.tempLocs = self.selectionArray[self.tree.query_ball_point([0, self.o + 1], 0.1), 0:2]
-                if np.shape(self.tempLocs)[0] > 0:
+    def prepare_NNs(self):
+        for k in range(self.number_of_selections):
+            # these self values have to be have to be lists: each object in the list is each fiducial
+            self.selectionArray = np.asarray(self.selections[k].fiducial)
+            self.maxFrame = np.max(self.selectionArray[:,2])
+            self.length = np.shape(self.selectionArray)[0]
+            self.frames = np.zeros([self.length, 2])
+            self.frames[:, 1] = self.selectionArray[:, 2]
+            self.tree = spatial.KDTree(self.frames[:, 0:2])
+            self.d = np.zeros([self.length, 1])
+            self.p = -1
+            for i in range(self.length - 1):
+                self.o = self.selectionArray[i, 2]
+                # j muss angeben,ob nächster Frame existent ist
+                self.j = self.selectionArray[i + 1, 2] - self.selectionArray[i, 2]
+                if self.selectionArray[i, 2] < self.maxFrame and self.o == self.p:
                     self.d[i] = self.min_dist(self.selectionArray[i, 0:3], self.tempLocs)
                     self.p = self.o
-            elif self.selectionArray[i, 2] == self.maxFrame:
-                break
-        print('\n')
-        self.idx = self.d > 0
-        self.NeNADist = self.d[self.idx]
-        self.minDist = 0
-        self.maxDist = 100
-        self.int = 1
-        self.inc = (self.maxDist - self.minDist) / self.int
+                elif self.selectionArray[i, 2] < self.maxFrame and self.o > self.p:
+                    self.tempLocs = self.selectionArray[self.tree.query_ball_point([0, self.o + 1], 0.1), 0:2]
+                    if np.shape(self.tempLocs)[0] > 0:
+                        self.d[i] = self.min_dist(self.selectionArray[i, 0:3], self.tempLocs)
+                        self.p = self.o
+                elif self.selectionArray[i, 2] == self.maxFrame:
+                    break
+            print('\n')
+            self.idx = self.d > 0
+            self.NeNADist = self.d[self.idx]
+            self.inc = (self.maxDist - self.minDist) / self.int
 
-        plt.style.use('default')
-        plt.rcParams['font.family'] = 'Arial'
-        self.x = np.arange(self.minDist, self.maxDist, self.int, dtype='float')
-        self.y = np.histogram(self.NeNADist, bins=int(self.inc), range=(self.minDist, self.maxDist), density=True)[0]
-        plt.figure()
-        plt.bar(self.x, self.y, color='gray', edgecolor='black')
-        plt.xlabel("Distance (nm)")
-        plt.ylabel("Probability")
-        plt.show(block=False)
+            plt.style.use('default')
+            plt.rcParams['font.family'] = 'Arial'
+            self.x = np.arange(self.minDist, self.maxDist, self.int, dtype='float')
+            self.y = np.histogram(self.NeNADist, bins=int(self.inc), range=(self.minDist, self.maxDist), density=True)[0]
+            plt.figure()
+            plt.bar(self.x, self.y, color='gray', edgecolor='black')
+            plt.xlabel("Distance (nm)")
+            plt.ylabel("Probability")
+            plt.title("Fiducial #{}".format(k+1))
+            plt.show(block=False)

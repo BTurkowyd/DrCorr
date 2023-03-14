@@ -238,6 +238,7 @@ class Ui_MainWindow(object):
             self.calculateTemporalNeNA.setDisabled(False)
             self.calculateDBSCAN.setDisabled(False)
             self.calculateOPTICS.setDisabled(False)
+            self.run_display_image()
             print("Data loaded")
         else:
             print("No data")
@@ -292,7 +293,7 @@ class Ui_MainWindow(object):
             #     self.nena.show()
                 # self.runNena = methods.NeNACalculation(self, self, self.image_recon, self.locfileName)
             # self.runNena.run()
-        except AttributeError:
+        except (AttributeError, IndexError):
             print('Please select ROIs.')
         # methods.neNa(self, self.locfileName, self.imgFileName)
 
