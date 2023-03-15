@@ -14,7 +14,7 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.centralwidget = QtWidgets.QWidget(NeNAanalysis)
         self.centralwidget.setObjectName("centralwidget")
         self.minDist = 0
-        self.maxDist = 100
+        self.maxDist = 150
         self.int = 1
         self.inc= (self.maxDist - self.minDist) / self.int
 
@@ -81,9 +81,7 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         NeNAanalysis.setStatusBar(self.statusbar)
 
         self.retranslateUi(NeNAanalysis, count)
-        # self.initialize_nena()
         QtCore.QMetaObject.connectSlotsByName(NeNAanalysis)
-        # check in methods.calc_NeNA how to procedd further
 
     def retranslateUi(self, NeNAanalysis, count):
         _translate = QtCore.QCoreApplication.translate
@@ -95,14 +93,11 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         for i in range(self.number_of_selections):
             self.runNeNA[i].setText(_translate("NeNAanalysis", "Compute NeNA"))
             self.setDefaults[i].setText(_translate("NeNAanalysis", "Set Defaults {}".format(i+1)))
-            self.lowerBoundValue[i].setHtml(_translate("NeNAanalysis", "3"))
+            self.lowerBoundValue[i].setHtml(_translate("NeNAanalysis", str(self.minDist)))
             self.initialValue[i].setHtml(_translate("NeNAanalysis", "{}".format(int(self.x[i][np.argmax(self.y[i])]))))
-            self.upperBoundValue[i].setHtml(_translate("NeNAanalysis", "100"))
+            self.upperBoundValue[i].setHtml(_translate("NeNAanalysis", str(self.maxDist)))
 
     def compute_nena(self, index):
-        # plt.close()
-        # self.x[index] = np.arange(self.minDist, self.maxDist, self.int, dtype='float')
-        # self.y[index] = np.histogram(self.NeNADist[index], bins=int(self.inc), range=(self.minDist, self.maxDist), density=True)[0]
         self.accuracy, self.accuracy_err = self.CFit_resultsCorr(self.x[index], self.y[index], self.initialValue[index].toPlainText(), self.lowerBoundValue[index].toPlainText(), self.upperBoundValue[index].toPlainText())
         self.acc[index] = self.accuracy
         self.acc_err[index] = self.accuracy_err
@@ -169,14 +164,5 @@ class Ui_NeNA(QtWidgets.QMainWindow):
                     break
             self.idx[k] = self.d > 0
             self.NeNADist[k] = self.d[self.idx[k]]
-
-            # plt.style.use('default')
-            # plt.rcParams['font.family'] = 'Arial'
             self.x[k] = np.arange(self.minDist, self.maxDist, self.int, dtype='float')
             self.y[k] = np.histogram(self.NeNADist[k], bins=int(self.inc), range=(self.minDist, self.maxDist), density=True)[0]
-            # plt.figure()
-            # plt.bar(self.x[k], self.y[k], color='gray', edgecolor='black')
-            # plt.xlabel("Distance (nm)")
-            # plt.ylabel("Probability")
-            # plt.title("Fiducial #{}".format(k+1))
-            # plt.show(block=False)
