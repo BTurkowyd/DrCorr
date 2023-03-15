@@ -13,40 +13,54 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         NeNAanalysis.resize(500, 90 + 50*self.number_of_selections)
         self.centralwidget = QtWidgets.QWidget(NeNAanalysis)
         self.centralwidget.setObjectName("centralwidget")
-        self.prepare_NNs()
-
-        self.runNeNA = []
-        self.setDefaults = []
-        self.lowerBoundValue = []
-        self.initialValue = []
-        self.upperBoundValue = []
-
         self.minDist = 0
         self.maxDist = 100
         self.int = 1
+        self.inc= (self.maxDist - self.minDist) / self.int
+
+        self.runNeNA = [None] * self.number_of_selections
+        self.setDefaults = [None] * self.number_of_selections
+        self.lowerBoundValue = [None] * self.number_of_selections
+        self.initialValue = [None] * self.number_of_selections
+        self.upperBoundValue = [None] * self.number_of_selections
+
+        self.selectionArray = [None] * self.number_of_selections
+        self.maxFrame = [None] * self.number_of_selections
+        self.length = [None] * self.number_of_selections
+        self.frames = [None] * self.number_of_selections
+        self.tree = [None] * self.number_of_selections
+        self.idx = [None] * self.number_of_selections
+        self.NeNADist = [None] * self.number_of_selections
+        self.x = [None] * self.number_of_selections
+        self.y = [None] * self.number_of_selections
+        self.acc = [None] * self.number_of_selections
+        self.acc_err = [None] * self.number_of_selections
+        self.nenaFit = [None] * self.number_of_selections
+
+        self.prepare_NNs()
 
         for i in range(self.number_of_selections):
-            self.lowerBoundValue.append(QtWidgets.QTextEdit(self.centralwidget))
+            self.lowerBoundValue[i] =QtWidgets.QTextEdit(self.centralwidget)
             self.lowerBoundValue[i].setGeometry(QtCore.QRect(10, i*50 + 40, 60, 30))
             self.lowerBoundValue[i].setObjectName("lowerBoundValue {}".format(i))
 
-            self.initialValue.append(QtWidgets.QTextEdit(self.centralwidget))
+            self.initialValue[i] =QtWidgets.QTextEdit(self.centralwidget)
             self.initialValue[i].setGeometry(QtCore.QRect(110, i*50 + 40, 60, 30))
             self.initialValue[i].setObjectName("initialValue {}".format(i))
 
-            self.upperBoundValue.append(QtWidgets.QTextEdit(self.centralwidget))
+            self.upperBoundValue[i] =QtWidgets.QTextEdit(self.centralwidget)
             self.upperBoundValue[i].setGeometry(QtCore.QRect(210, i*50 + 40, 60, 30))
             self.upperBoundValue[i].setObjectName("upperBoundValue {}".format(i))
 
-            self.runNeNA.append(QtWidgets.QPushButton(self.centralwidget))
+            self.runNeNA[i] =QtWidgets.QPushButton(self.centralwidget)
             self.runNeNA[i].setGeometry(QtCore.QRect(390, i*50 + 40, 90, 30))
             self.runNeNA[i].setObjectName("runNeNA {}".format(i))
-            self.runNeNA[i].clicked.connect(self.compute_nena)
+            self.runNeNA[i].clicked.connect(lambda state, i=i: self.compute_nena(i))
 
-            self.setDefaults.append(QtWidgets.QPushButton(self.centralwidget))
+            self.setDefaults[i] =QtWidgets.QPushButton(self.centralwidget)
             self.setDefaults[i].setGeometry(QtCore.QRect(290, i*50 + 40, 90, 30))
             self.setDefaults[i].setObjectName("setDefaults {}".format(i))
-            self.setDefaults[i].clicked.connect(lambda: self.set_defaults(i))
+            self.setDefaults[i].clicked.connect(lambda state, i=i: self.set_defaults(i))
 
         self.lowerBoundLabel = QtWidgets.QLabel(self.centralwidget)
         self.lowerBoundLabel.setGeometry(QtCore.QRect(10, 10, 80, 30))
@@ -80,33 +94,33 @@ class Ui_NeNA(QtWidgets.QMainWindow):
 
         for i in range(self.number_of_selections):
             self.runNeNA[i].setText(_translate("NeNAanalysis", "Compute NeNA"))
-            self.setDefaults[i].setText(_translate("NeNAanalysis", "Set Defaults"))
+            self.setDefaults[i].setText(_translate("NeNAanalysis", "Set Defaults {}".format(i+1)))
             self.lowerBoundValue[i].setHtml(_translate("NeNAanalysis", "3"))
-            # self.x self.y have to be lists: each object in the list is each fiducial
-            self.initialValue[i].setHtml(_translate("NeNAanalysis", "{}".format(int(self.x[np.argmax(self.y)]))))
+            self.initialValue[i].setHtml(_translate("NeNAanalysis", "{}".format(int(self.x[i][np.argmax(self.y[i])]))))
             self.upperBoundValue[i].setHtml(_translate("NeNAanalysis", "100"))
 
-    def compute_nena(self):
+    def compute_nena(self, index):
         # plt.close()
-        self.x = np.arange(self.minDist, self.maxDist, self.int, dtype='float')
-        self.y = np.histogram(self.NeNADist, bins=int(self.inc), range=(self.minDist, self.maxDist), density=True)[0]
-        self.acc, self.acc_err = self.CFit_resultsCorr(self.x, self.y, self.initialValue.toPlainText(), self.lowerBoundValue.toPlainText(), self.upperBoundValue.toPlainText())
-        print(np.round(self.acc[0],2))
-        self.nenaFit = self.cFunc_2dCorr(self.x, *self.acc)
+        # self.x[index] = np.arange(self.minDist, self.maxDist, self.int, dtype='float')
+        # self.y[index] = np.histogram(self.NeNADist[index], bins=int(self.inc), range=(self.minDist, self.maxDist), density=True)[0]
+        self.accuracy, self.accuracy_err = self.CFit_resultsCorr(self.x[index], self.y[index], self.initialValue[index].toPlainText(), self.lowerBoundValue[index].toPlainText(), self.upperBoundValue[index].toPlainText())
+        self.acc[index] = self.accuracy
+        self.acc_err[index] = self.accuracy_err
+        print(np.round(self.acc[index][0],2))
+        self.nenaFit[index] = self.cFunc_2dCorr(self.x[index], *self.acc[index])
         plt.style.use('default')
         plt.rcParams['font.family'] = 'Arial'
         plt.figure()
-        plt.bar(self.x, self.y, color='gray', edgecolor='black')
-        plt.plot(self.x, self.nenaFit, color='red')
+        plt.bar(self.x[index], self.y[index], color='gray', edgecolor='black')
+        plt.plot(self.x[index], self.nenaFit[index], color='red')
         plt.xlabel("Distance (nm)")
         plt.ylabel("Probability")
-        plt.title('NeNA: {} nm'.format(np.round(self.acc[0],2)))
+        plt.title('Selection #{}: NeNA {} nm'.format(index+1, np.round(self.acc[index][0],2)))
         plt.show(block=False)
     
     def set_defaults(self, index):
-        print(index)
         self.lowerBoundValue[index].setPlainText("3")
-        self.initialValue[index].setPlainText("{}".format(int(self.x[np.argmax(self.y)])))
+        self.initialValue[index].setPlainText("{}".format(int(self.x[index][np.argmax(self.y[index])])))
         self.upperBoundValue[index].setPlainText("100")
     
     def min_dist(self, point, locs):
@@ -124,7 +138,6 @@ class Ui_NeNA(QtWidgets.QMainWindow):
     
     def CFit_resultsCorr(self, x, y, initialValue, lowerBound, upperBound):
         A = self.compute_area(x, y)
-        print(A)
         p0 = np.array([initialValue, 15, 100, (A / 2), (A / 2), ((y[98] / 200))])
         bounds = ([lowerBound,0,0,0,0,0],[upperBound,1000,1000,1,1,1])
         popt, pcov = curve_fit(self.cFunc_2dCorr, x, y, p0=p0, bounds=bounds)
@@ -132,41 +145,38 @@ class Ui_NeNA(QtWidgets.QMainWindow):
     
     def prepare_NNs(self):
         for k in range(self.number_of_selections):
-            # these self values have to be have to be lists: each object in the list is each fiducial
-            self.selectionArray = np.asarray(self.selections[k].fiducial)
-            self.maxFrame = np.max(self.selectionArray[:,2])
-            self.length = np.shape(self.selectionArray)[0]
-            self.frames = np.zeros([self.length, 2])
-            self.frames[:, 1] = self.selectionArray[:, 2]
-            self.tree = spatial.KDTree(self.frames[:, 0:2])
-            self.d = np.zeros([self.length, 1])
+            self.selectionArray[k] = np.asarray(self.selections[k].fiducial)
+            self.maxFrame[k] = np.max(self.selectionArray[k][:,2])
+            self.length[k] = np.shape(self.selectionArray[k])[0]
+            self.frames[k] = np.zeros([self.length[k], 2])
+            self.frames[k][:, 1] = self.selectionArray[k][:, 2]
+            self.tree[k] = spatial.KDTree(self.frames[k][:, 0:2])
+            self.d = np.zeros([self.length[k], 1])
             self.p = -1
-            for i in range(self.length - 1):
-                self.o = self.selectionArray[i, 2]
+            for i in range(self.length[k] - 1):
+                self.o = self.selectionArray[k][i, 2]
                 # j muss angeben,ob nächster Frame existent ist
-                self.j = self.selectionArray[i + 1, 2] - self.selectionArray[i, 2]
-                if self.selectionArray[i, 2] < self.maxFrame and self.o == self.p:
-                    self.d[i] = self.min_dist(self.selectionArray[i, 0:3], self.tempLocs)
+                self.j = self.selectionArray[k][i + 1, 2] - self.selectionArray[k][i, 2]
+                if self.selectionArray[k][i, 2] < self.maxFrame[k] and self.o == self.p:
+                    self.d[i] = self.min_dist(self.selectionArray[k][i, 0:3], self.tempLocs)
                     self.p = self.o
-                elif self.selectionArray[i, 2] < self.maxFrame and self.o > self.p:
-                    self.tempLocs = self.selectionArray[self.tree.query_ball_point([0, self.o + 1], 0.1), 0:2]
+                elif self.selectionArray[k][i, 2] < self.maxFrame[k] and self.o > self.p:
+                    self.tempLocs = self.selectionArray[k][self.tree[k].query_ball_point([0, self.o + 1], 0.1), 0:2]
                     if np.shape(self.tempLocs)[0] > 0:
-                        self.d[i] = self.min_dist(self.selectionArray[i, 0:3], self.tempLocs)
+                        self.d[i] = self.min_dist(self.selectionArray[k][i, 0:3], self.tempLocs)
                         self.p = self.o
-                elif self.selectionArray[i, 2] == self.maxFrame:
+                elif self.selectionArray[k][i, 2] == self.maxFrame[k]:
                     break
-            print('\n')
-            self.idx = self.d > 0
-            self.NeNADist = self.d[self.idx]
-            self.inc = (self.maxDist - self.minDist) / self.int
+            self.idx[k] = self.d > 0
+            self.NeNADist[k] = self.d[self.idx[k]]
 
-            plt.style.use('default')
-            plt.rcParams['font.family'] = 'Arial'
-            self.x = np.arange(self.minDist, self.maxDist, self.int, dtype='float')
-            self.y = np.histogram(self.NeNADist, bins=int(self.inc), range=(self.minDist, self.maxDist), density=True)[0]
-            plt.figure()
-            plt.bar(self.x, self.y, color='gray', edgecolor='black')
-            plt.xlabel("Distance (nm)")
-            plt.ylabel("Probability")
-            plt.title("Fiducial #{}".format(k+1))
-            plt.show(block=False)
+            # plt.style.use('default')
+            # plt.rcParams['font.family'] = 'Arial'
+            self.x[k] = np.arange(self.minDist, self.maxDist, self.int, dtype='float')
+            self.y[k] = np.histogram(self.NeNADist[k], bins=int(self.inc), range=(self.minDist, self.maxDist), density=True)[0]
+            # plt.figure()
+            # plt.bar(self.x[k], self.y[k], color='gray', edgecolor='black')
+            # plt.xlabel("Distance (nm)")
+            # plt.ylabel("Probability")
+            # plt.title("Fiducial #{}".format(k+1))
+            # plt.show(block=False)
