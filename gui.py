@@ -55,7 +55,7 @@ class Ui_MainWindow(object):
         self.progressBar.setObjectName("progressBar")
 
         self.fiducialThresholdLabel = QtWidgets.QLabel(self.centralwidget)
-        self.fiducialThresholdLabel.setGeometry(QtCore.QRect(20, 70, 200, 40))
+        self.fiducialThresholdLabel.setGeometry(QtCore.QRect(20, 80, 200, 40))
         self.fiducialThresholdLabel.setObjectName("fiducialThresholdLabel")
 
         self.loadData = QtWidgets.QPushButton(self.centralwidget)
@@ -222,7 +222,6 @@ class Ui_MainWindow(object):
         else:
             self.openFile = QtWidgets.QWidget()
             self.locfileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the localization file", "","CSV Files (*.csv) ;;All Files (*)")
-        # self.imgFileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the image reconstruction", "","PNG Files (*.PNG) ;; All Files (*)")
 
         if self.locfileName:
             print(self.locfileName)
@@ -230,10 +229,8 @@ class Ui_MainWindow(object):
             self.imageDisplay.setDisabled(False)
             self.delLastROI.setDisabled(False)
             self.delAllROIs.setDisabled(False)
-            # self.analyzeFiducials.setDisabled(False)
             self.beadAnalyzer.setDisabled(False)
             self.loadROIs.setDisabled(False)
-            # self.driftCorrection.setDisabled(False)
             self.calculateNeNA.setDisabled(False)
             self.calculateTemporalNeNA.setDisabled(False)
             self.calculateDBSCAN.setDisabled(False)
@@ -287,15 +284,8 @@ class Ui_MainWindow(object):
             self.nena = nena_widget.Ui_NeNA()
             self.nena.setupUi(self.image_recon.selections, self.nena, 1)
             self.nena.show()
-            # for i, sele in enumerate(self.image_recon.selections):
-            #     self.nena = nena_widget.Ui_NeNA()
-            #     self.nena.setupUi(sele, self.nena, i+1)
-            #     self.nena.show()
-                # self.runNena = methods.NeNACalculation(self, self, self.image_recon, self.locfileName)
-            # self.runNena.run()
         except (AttributeError, IndexError):
             print('Please select ROIs.')
-        # methods.neNa(self, self.locfileName, self.imgFileName)
 
     def run_DBSCAN(self):
         self.dbscan = dbscan_widget.Ui_DBSCANanalysis()

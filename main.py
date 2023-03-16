@@ -13,6 +13,7 @@ class AppWindow(QMainWindow):
 
 app = QApplication(sys.argv)
 app.setStyle('Fusion')
+app.setFont(QFont('Arial', 10))
 w = AppWindow()
 w.show()
 sys.exit(app.exec_())

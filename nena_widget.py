@@ -10,7 +10,7 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         NeNAanalysis.setObjectName("NeNAanalysis")
         self.selections = selection
         self.number_of_selections = len(self.selections)
-        NeNAanalysis.resize(500, 90 + 50*self.number_of_selections)
+        NeNAanalysis.resize(550, 110 + 50*self.number_of_selections)
         self.centralwidget = QtWidgets.QWidget(NeNAanalysis)
         self.centralwidget.setObjectName("centralwidget")
         self.minDist = 0
@@ -23,6 +23,7 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.lowerBoundValue = [None] * self.number_of_selections
         self.initialValue = [None] * self.number_of_selections
         self.upperBoundValue = [None] * self.number_of_selections
+        self.roiLabels = [None] * self.number_of_selections
 
         self.selectionArray = [None] * self.number_of_selections
         self.maxFrame = [None] * self.number_of_selections
@@ -36,40 +37,57 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.acc = [None] * self.number_of_selections
         self.acc_err = [None] * self.number_of_selections
         self.nenaFit = [None] * self.number_of_selections
+        self.nenaFitA1 = [None] * self.number_of_selections
+        self.nenaFitA2 = [None] * self.number_of_selections
+        self.nenaFitA3 = [None] * self.number_of_selections
 
         self.prepare_NNs()
 
         for i in range(self.number_of_selections):
+            self.roiLabels[i] = QtWidgets.QLabel(self.centralwidget)
+            self.roiLabels[i].setGeometry(QtCore.QRect(10, i*50 + 40, 60, 30))
+            self.roiLabels[i].setObjectName("roiLabel {}".format(i))
+
             self.lowerBoundValue[i] =QtWidgets.QTextEdit(self.centralwidget)
-            self.lowerBoundValue[i].setGeometry(QtCore.QRect(10, i*50 + 40, 60, 30))
+            self.lowerBoundValue[i].setGeometry(QtCore.QRect(60, i*50 + 40, 60, 30))
             self.lowerBoundValue[i].setObjectName("lowerBoundValue {}".format(i))
 
             self.initialValue[i] =QtWidgets.QTextEdit(self.centralwidget)
-            self.initialValue[i].setGeometry(QtCore.QRect(110, i*50 + 40, 60, 30))
+            self.initialValue[i].setGeometry(QtCore.QRect(160, i*50 + 40, 60, 30))
             self.initialValue[i].setObjectName("initialValue {}".format(i))
 
             self.upperBoundValue[i] =QtWidgets.QTextEdit(self.centralwidget)
-            self.upperBoundValue[i].setGeometry(QtCore.QRect(210, i*50 + 40, 60, 30))
+            self.upperBoundValue[i].setGeometry(QtCore.QRect(260, i*50 + 40, 60, 30))
             self.upperBoundValue[i].setObjectName("upperBoundValue {}".format(i))
 
             self.runNeNA[i] =QtWidgets.QPushButton(self.centralwidget)
-            self.runNeNA[i].setGeometry(QtCore.QRect(390, i*50 + 40, 90, 30))
+            self.runNeNA[i].setGeometry(QtCore.QRect(440, i*50 + 40, 90, 30))
             self.runNeNA[i].setObjectName("runNeNA {}".format(i))
             self.runNeNA[i].clicked.connect(lambda state, i=i: self.compute_nena(i))
 
             self.setDefaults[i] =QtWidgets.QPushButton(self.centralwidget)
-            self.setDefaults[i].setGeometry(QtCore.QRect(290, i*50 + 40, 90, 30))
+            self.setDefaults[i].setGeometry(QtCore.QRect(340, i*50 + 40, 90, 30))
             self.setDefaults[i].setObjectName("setDefaults {}".format(i))
             self.setDefaults[i].clicked.connect(lambda state, i=i: self.set_defaults(i))
 
+        self.preComputeAll =QtWidgets.QPushButton(self.centralwidget)
+        self.preComputeAll.setGeometry(QtCore.QRect(340, 40 + 50*self.number_of_selections, 90, 30))
+        self.preComputeAll.setObjectName("computeAll")
+        self.preComputeAll.clicked.connect(self.compute_all)
+        
+        self.saveAll =QtWidgets.QPushButton(self.centralwidget)
+        self.saveAll.setGeometry(QtCore.QRect(440, 40 + 50*self.number_of_selections, 90, 30))
+        self.saveAll.setObjectName("saveAll")
+        # self.saveAll.clicked.connect(self.compute_all)
+
         self.lowerBoundLabel = QtWidgets.QLabel(self.centralwidget)
-        self.lowerBoundLabel.setGeometry(QtCore.QRect(10, 10, 80, 30))
+        self.lowerBoundLabel.setGeometry(QtCore.QRect(60, 10, 80, 30))
         self.lowerBoundLabel.setObjectName("lowerBoundLabel")
         self.initialLabel = QtWidgets.QLabel(self.centralwidget)
-        self.initialLabel.setGeometry(QtCore.QRect(110, 10, 80, 30))
+        self.initialLabel.setGeometry(QtCore.QRect(160, 10, 80, 30))
         self.initialLabel.setObjectName("initialLabel")
         self.upperBoundLabel = QtWidgets.QLabel(self.centralwidget)
-        self.upperBoundLabel.setGeometry(QtCore.QRect(210, 10, 80, 30))
+        self.upperBoundLabel.setGeometry(QtCore.QRect(260, 10, 80, 30))
         self.upperBoundLabel.setObjectName("upperBoundLabel")
         NeNAanalysis.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(NeNAanalysis)
@@ -90,9 +108,13 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.initialLabel.setText(_translate("NeNAanalysis", "Initial Value"))
         self.upperBoundLabel.setText(_translate("NeNAanalysis", "Upper Bound"))
 
+        self.preComputeAll.setText(_translate("NeNAanalysis", "Compute All"))
+        self.saveAll.setText(_translate("NeNAanalysis", "Save All"))
+
         for i in range(self.number_of_selections):
-            self.runNeNA[i].setText(_translate("NeNAanalysis", "Compute NeNA"))
-            self.setDefaults[i].setText(_translate("NeNAanalysis", "Set Defaults {}".format(i+1)))
+            self.roiLabels[i].setText(_translate("NeNAanalysis", "ROI #{}".format(i+1)))
+            self.runNeNA[i].setText(_translate("NeNAanalysis", "Compute"))
+            self.setDefaults[i].setText(_translate("NeNAanalysis", "Reset"))
             self.lowerBoundValue[i].setHtml(_translate("NeNAanalysis", str(self.minDist)))
             self.initialValue[i].setHtml(_translate("NeNAanalysis", "{}".format(int(self.x[i][np.argmax(self.y[i])]))))
             self.upperBoundValue[i].setHtml(_translate("NeNAanalysis", str(self.maxDist)))
@@ -103,16 +125,27 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.acc_err[index] = self.accuracy_err
         print(np.round(self.acc[index][0],2))
         self.nenaFit[index] = self.cFunc_2dCorr(self.x[index], *self.acc[index])
+        self.nenaFitA1[index] = self.cFunc_2dCorr(self.x[index], *[*self.acc[index][:4],0,0])
+        self.nenaFitA2[index] = self.cFunc_2dCorr(self.x[index], *[*self.acc[index][:3], 0, self.acc[index][4], 0])
+        self.nenaFitA3[index] = self.cFunc_2dCorr(self.x[index], *[*self.acc[index][:3], 0, 0, self.acc[index][5]])
         plt.style.use('default')
         plt.rcParams['font.family'] = 'Arial'
         plt.figure()
         plt.bar(self.x[index], self.y[index], color='gray', edgecolor='black')
-        plt.plot(self.x[index], self.nenaFit[index], color='red')
+        plt.plot(self.x[index], self.nenaFit[index], color='red', label='NeNA Endesfelder 2014', linewidth=3)
+        plt.plot(self.x[index], self.nenaFitA1[index], color='green', label='Single mol.', linewidth=2)
+        plt.plot(self.x[index], self.nenaFitA2[index], color='blue', label='Corr. short diff-limited region', linewidth=2)
+        plt.plot(self.x[index], self.nenaFitA3[index], color='orange', label='Corr. long diff-limited region', linewidth=2)
         plt.xlabel("Distance (nm)")
         plt.ylabel("Probability")
-        plt.title('Selection #{}: NeNA {} nm'.format(index+1, np.round(self.acc[index][0],2)))
+        plt.legend()
+        plt.title('ROI #{}: NeNA {} nm'.format(index+1, np.round(self.acc[index][0],2)))
         plt.show(block=False)
     
+    def compute_all(self):
+        for i in range(self.number_of_selections):
+            self.compute_nena(i)
+
     def set_defaults(self, index):
         self.lowerBoundValue[index].setPlainText("3")
         self.initialValue[index].setPlainText("{}".format(int(self.x[index][np.argmax(self.y[index])])))
@@ -126,7 +159,7 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         areaF = abs(np.trapz(y, r))
         return areaF
 
-    def cFunc_2dCorr(self, x, dSMLM, xc, w, A2, A1, A3):
+    def cFunc_2dCorr(self, x, dSMLM, xc, w, A1, A2, A3):
         #dSMLM is the value which you wanna get out of it
         y = (x / (2 * dSMLM * dSMLM)) * np.exp((-1) * x * x / (4 * dSMLM * dSMLM)) * A1 + (A2 / (w * np.sqrt(np.pi * 2))) * np.exp(-0.5 * ((x - xc) / w) * ((x - xc) / w)) + A3 * x
         return y
