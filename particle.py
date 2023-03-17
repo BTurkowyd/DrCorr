@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Feb 27 16:06:06 2018
-
-@author: turkowyd
-"""
-
 class Particle:
     def __init__(self, x, y, t, I, ident=None, sigma=None, offset=None, bkgstd=None, chi2=None, uncertainty=None):
         self.x = x

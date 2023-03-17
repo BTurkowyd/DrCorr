@@ -1,4 +1,3 @@
-
 from PyQt5 import QtCore, QtWidgets
 import numpy as np
 from scipy import spatial
@@ -141,6 +140,7 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         plt.legend()
         plt.title('ROI #{}: NeNA {} nm'.format(index+1, np.round(self.acc[index][0],2)))
         plt.show(block=False)
+        plt.tight_layout()
     
     def compute_all(self):
         for i in range(self.number_of_selections):

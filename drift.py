@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Feb 27 16:08:03 2018
-
-@author: turkowyd
-"""
 from numpy import empty, concatenate, nan, nanmean, shape, isnan, array, savetxt, linspace, nanstd
 from scipy.signal import savgol_filter
 
