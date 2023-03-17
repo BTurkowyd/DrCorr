@@ -1,13 +1,16 @@
 from PyQt5 import QtCore, QtWidgets
 import numpy as np
+import os
 from scipy import spatial
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 class Ui_NeNA(QtWidgets.QMainWindow):
-    def setupUi(self, selection, NeNAanalysis, count):
+    def setupUi(self, selection, currentDir, NeNAanalysis, count):
         NeNAanalysis.setObjectName("NeNAanalysis")
         self.selections = selection
+        self.currentDir = currentDir
         self.number_of_selections = len(self.selections)
         NeNAanalysis.resize(550, 110 + 50*self.number_of_selections)
         self.centralwidget = QtWidgets.QWidget(NeNAanalysis)
@@ -39,6 +42,7 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.nenaFitA1 = [None] * self.number_of_selections
         self.nenaFitA2 = [None] * self.number_of_selections
         self.nenaFitA3 = [None] * self.number_of_selections
+        self.nenaPlots = [None] * self.number_of_selections
 
         self.prepare_NNs()
 
@@ -77,7 +81,7 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.saveAll =QtWidgets.QPushButton(self.centralwidget)
         self.saveAll.setGeometry(QtCore.QRect(440, 40 + 50*self.number_of_selections, 90, 30))
         self.saveAll.setObjectName("saveAll")
-        # self.saveAll.clicked.connect(self.compute_all)
+        self.saveAll.clicked.connect(self.save_all)
 
         self.lowerBoundLabel = QtWidgets.QLabel(self.centralwidget)
         self.lowerBoundLabel.setGeometry(QtCore.QRect(60, 10, 80, 30))
@@ -129,7 +133,7 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.nenaFitA3[index] = self.cFunc_2dCorr(self.x[index], *[*self.acc[index][:3], 0, 0, self.acc[index][5]])
         plt.style.use('default')
         plt.rcParams['font.family'] = 'Arial'
-        plt.figure()
+        self.nenaPlots[index] = plt.figure()
         plt.bar(self.x[index], self.y[index], color='gray', edgecolor='black')
         plt.plot(self.x[index], self.nenaFit[index], color='red', label='NeNA Endesfelder 2014', linewidth=3)
         plt.plot(self.x[index], self.nenaFitA1[index], color='green', label='Single mol.', linewidth=2)
@@ -145,6 +149,19 @@ class Ui_NeNA(QtWidgets.QMainWindow):
     def compute_all(self):
         for i in range(self.number_of_selections):
             self.compute_nena(i)
+
+
+    def save_all(self):
+        try:
+            pdfFile = PdfPages(os.path.join(self.currentDir, 'NeNA_histograms.pdf'))
+            with open(os.path.join(self.currentDir,'NeNA_tables.csv'), 'w') as file:
+                file.write("ROI, NeNA (nm)\n")
+                for i in range(self.number_of_selections):
+                    file.write(" {}, {}\n". format(i+1, np.round(self.acc[i][0],2)))
+                    self.nenaPlots[i].savefig(pdfFile, format='pdf')
+            pdfFile.close()
+        except TypeError:
+            print("NeNA values are not computed. File cound't be saved.")
 
     def set_defaults(self, index):
         self.lowerBoundValue[index].setPlainText("3")

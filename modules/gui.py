@@ -7,6 +7,7 @@ import modules.bead_analyzer as bead_analyzer
 from modules.image_reconstruction2 import ImageReconstruction
 import numpy as np
 import pandas as pd
+import os
 
 from modules.particle import Particle
 
@@ -187,9 +188,13 @@ class Ui_MainWindow(object):
         if self.inputFormat.currentText() == "RapidSTORM":
             self.openFile = QtWidgets.QWidget()
             self.locfileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the localization file", "","TXT Files (*.txt) ;;All Files (*)")
+            self.currentDirectory = os.path.dirname(self.locfileName)
+
         else:
             self.openFile = QtWidgets.QWidget()
             self.locfileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.openFile,"Select the localization file", "","CSV Files (*.csv) ;;All Files (*)")
+            self.currentDirectory = os.path.dirname(self.locfileName)
+
 
         if self.locfileName:
             print(self.locfileName)
@@ -250,7 +255,7 @@ class Ui_MainWindow(object):
         try:
             self.image_recon.create_fiducials(0)
             self.nena = nena_widget.Ui_NeNA()
-            self.nena.setupUi(self.image_recon.selections, self.nena, 1)
+            self.nena.setupUi(self.image_recon.selections, self.currentDirectory, self.nena, 1)
             self.nena.show()
         except (AttributeError, IndexError):
             print('Please select ROIs.')
