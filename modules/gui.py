@@ -196,7 +196,6 @@ class Ui_MainWindow(object):
             self.delLastROI.setDisabled(False)
             self.delAllROIs.setDisabled(False)
             self.beadAnalyzer.setDisabled(False)
-            self.loadROIs.setDisabled(False)
             self.calculateNeNA.setDisabled(False)
             self.calculateTemporalNeNA.setDisabled(False)
             self.calculateDBSCAN.setDisabled(False)

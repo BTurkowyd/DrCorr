@@ -3,6 +3,7 @@ import numpy as np
 import os
 from scipy import spatial
 from scipy.optimize import curve_fit
+from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -38,6 +39,8 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.y = [None] * self.number_of_selections
         self.acc = [None] * self.number_of_selections
         self.acc_err = [None] * self.number_of_selections
+        self.st_dev = [None] * self.number_of_selections
+        self.r2_score = [None] * self.number_of_selections
         self.nenaFit = [None] * self.number_of_selections
         self.nenaFitA1 = [None] * self.number_of_selections
         self.nenaFitA2 = [None] * self.number_of_selections
@@ -126,11 +129,12 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         self.accuracy, self.accuracy_err = self.CFit_resultsCorr(self.x[index], self.y[index], self.initialValue[index].toPlainText(), self.lowerBoundValue[index].toPlainText(), self.upperBoundValue[index].toPlainText())
         self.acc[index] = self.accuracy
         self.acc_err[index] = self.accuracy_err
-        print(np.round(self.acc[index][0],2))
+        self.st_dev[index] = np.sqrt(np.diag(self.acc_err[index]))
         self.nenaFit[index] = self.cFunc_2dCorr(self.x[index], *self.acc[index])
         self.nenaFitA1[index] = self.cFunc_2dCorr(self.x[index], *[*self.acc[index][:4],0,0])
         self.nenaFitA2[index] = self.cFunc_2dCorr(self.x[index], *[*self.acc[index][:3], 0, self.acc[index][4], 0])
         self.nenaFitA3[index] = self.cFunc_2dCorr(self.x[index], *[*self.acc[index][:3], 0, 0, self.acc[index][5]])
+        self.r2_score[index] = r2_score(self.y[index] , self.nenaFit[index])
         plt.style.use('default')
         plt.rcParams['font.family'] = 'Arial'
         self.nenaPlots[index] = plt.figure()
@@ -142,7 +146,7 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         plt.xlabel("Distance (nm)")
         plt.ylabel("Probability")
         plt.legend()
-        plt.title('ROI #{}: NeNA {} nm'.format(index+1, np.round(self.acc[index][0],2)))
+        plt.title('ROI #{}: NeNA {} \u00B1 {} nm. R\u00b2 = {}.'.format(index+1, np.round(self.acc[index][0],2), np.round(self.st_dev[index][0],3), np.round(self.r2_score[index],3)))
         plt.show(block=False)
         plt.tight_layout()
     
@@ -155,9 +159,9 @@ class Ui_NeNA(QtWidgets.QMainWindow):
         try:
             pdfFile = PdfPages(os.path.join(self.currentDir, 'NeNA_histograms.pdf'))
             with open(os.path.join(self.currentDir,'NeNA_tables.csv'), 'w') as file:
-                file.write("ROI, NeNA (nm)\n")
+                file.write("ROI, NeNA (nm), STD, R^2\n")
                 for i in range(self.number_of_selections):
-                    file.write(" {}, {}\n". format(i+1, np.round(self.acc[i][0],2)))
+                    file.write(" {}, {}, {}, {}\n".format(i+1, np.round(self.acc[i][0],2), np.round(self.st_dev[i][0],3), np.round(self.r2_score[i],3)))
                     self.nenaPlots[i].savefig(pdfFile, format='pdf')
             pdfFile.close()
         except TypeError:
