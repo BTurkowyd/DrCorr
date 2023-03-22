@@ -2,3 +2,8 @@
 *.pdf
 *.png
 *.pyc
+*.txt
+*.csv
+!testowy_plik_tekstowy.txt
+!requirements.txt
+!thunderstorm_test_file.csv
