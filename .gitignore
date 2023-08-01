@@ -7,3 +7,6 @@
 !testowy_plik_tekstowy.txt
 !requirements.txt
 !thunderstorm_test_file.csv
+/build
+/dist
+main.spec
