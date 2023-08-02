@@ -2,10 +2,10 @@ from numpy import empty, concatenate, nan, nanmean, shape, isnan, array, savetxt
 from scipy.signal import savgol_filter
 
 class Drift:
-    def __init__(self, fiducials):
+    def __init__(self, fiducials, smoothing_factor):
         self.fiducials = fiducials
         self.longest = 0
-        self.window = 101
+        self.window = smoothing_factor
         
         for f in self.fiducials:
             if len(f.stretch) > self.longest:
